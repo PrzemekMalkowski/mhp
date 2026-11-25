@@ -25,9 +25,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"mhp/internal/model"
-	"mhp/internal/procfs"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/procfs"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"mhp/internal/shim"
+	"github.com/PrzemekMalkowski/mhp/internal/shim"
 )
 
 // TestAttachDetach injects bin/libmhp.so into a small C program and undoes it (root and a C compiler needed):

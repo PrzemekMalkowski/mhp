@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 // TestFaultCountsBatch checks that the batched read of the fault counters returns exactly what the entry-by-entry

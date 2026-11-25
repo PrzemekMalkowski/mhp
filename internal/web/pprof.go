@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 // pprof sample type names per mhp metric (unit bytes; pprof shows "space" types as memory)

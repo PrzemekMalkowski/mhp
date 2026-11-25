@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/live"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 //go:embed static

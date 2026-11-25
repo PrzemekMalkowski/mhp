@@ -26,9 +26,9 @@ import (
 	"github.com/cilium/ebpf/ringbuf"
 	"golang.org/x/sys/unix"
 
-	"mhp/internal/model"
-	"mhp/internal/sym"
-	"mhp/internal/track"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/track"
 )
 
 //go:embed memtrace.bpf.o

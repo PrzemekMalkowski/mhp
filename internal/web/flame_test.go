@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"mhp/internal/agg"
-	"mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
 )
 
 var testStacks = []agg.WeightedStack{

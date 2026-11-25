@@ -1,4 +1,4 @@
-module mhp
+module github.com/PrzemekMalkowski/mhp
 
 go 1.26.0
 

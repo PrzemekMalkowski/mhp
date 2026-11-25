@@ -70,16 +70,17 @@ func TestParseMallocInfo(t *testing.T) {
 
 // TestParseMallocInfoReal reads a real dump when one is around (98 arenas of a Percona Server under MyRocks).
 func TestParseMallocInfoReal(t *testing.T) {
-	b, err := os.ReadFile("../../reports/malloc_info-ps8.4.11-myrocks-blob-glibc-peak.xml")
+	b, err := os.ReadFile("../../docs/reports/malloc_info-ps8.4.11-myrocks-blob-glibc-peak.xml")
 	if err != nil {
 		t.Skip(err)
 	}
 	st, cut := ParseMallocInfo(b)
-	var free int64
+	var free, size int64
 	for _, a := range st.Arenas {
 		free += a.Free
+		size += a.Size
 	}
-	if cut || len(st.Arenas) < 10 || st.Free != free || st.Size != 37568077824 {
-		t.Errorf("cut %v, %d arenas, free %d vs %d, size %d", cut, len(st.Arenas), st.Free, free, st.Size)
+	if cut || len(st.Arenas) < 10 || st.Free != free || st.Size != size || st.Size < 1<<30 {
+		t.Errorf("cut %v, %d arenas, free %d vs %d, size %d vs %d", cut, len(st.Arenas), st.Free, free, st.Size, size)
 	}
 }

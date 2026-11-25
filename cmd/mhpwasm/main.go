@@ -12,7 +12,7 @@ import (
 	"net/http/httptest"
 	"syscall/js"
 
-	"mhp/internal/web"
+	"github.com/PrzemekMalkowski/mhp/internal/web"
 )
 
 var handler http.Handler

@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/classify"
-	"mhp/internal/live"
-	"mhp/internal/model"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/classify"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 // TestOfflineSnapshot checks that a server rebuilt from a snapshot (what the offline copy's WebAssembly does)

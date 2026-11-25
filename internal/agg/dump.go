@@ -1,11 +1,11 @@
 package agg
 
 import (
-	"mhp/internal/classify"
+	"github.com/PrzemekMalkowski/mhp/internal/classify"
 
 	"time"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 // Dump is the aggregator state the UI's queries need, for an offline copy: the stack table, thread names, the

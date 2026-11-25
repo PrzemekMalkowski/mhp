@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
 )
 
 // allocWrapper mirrors WRT in static/index.html: allocator frames hidden by "hide alloc wrappers".

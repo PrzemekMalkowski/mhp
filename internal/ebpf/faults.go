@@ -15,9 +15,9 @@ import (
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 
-	"mhp/internal/model"
-	"mhp/internal/perf"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/perf"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 //go:embed faults.bpf.o

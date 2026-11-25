@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 type Source struct {

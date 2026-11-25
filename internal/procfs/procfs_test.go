@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 	"os"
 	"path/filepath"
 	"testing"

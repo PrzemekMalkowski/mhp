@@ -1,4 +1,4 @@
-// mhp: Multi-dimensional Heap Profiler, a live memory profiler for mysqld. See DESIGN.md.
+// mhp: Multi-dimensional Heap Profiler, a live memory profiler for mysqld.
 package main
 
 import (
@@ -24,20 +24,20 @@ import (
 	"syscall"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/classify"
-	"mhp/internal/ebpf"
-	"mhp/internal/inject"
-	"mhp/internal/live"
-	"mhp/internal/model"
-	"mhp/internal/offline"
-	"mhp/internal/perf"
-	"mhp/internal/pfs"
-	"mhp/internal/procfs"
-	"mhp/internal/shim"
-	"mhp/internal/sim"
-	"mhp/internal/sym"
-	"mhp/internal/web"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/classify"
+	"github.com/PrzemekMalkowski/mhp/internal/ebpf"
+	"github.com/PrzemekMalkowski/mhp/internal/inject"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/offline"
+	"github.com/PrzemekMalkowski/mhp/internal/perf"
+	"github.com/PrzemekMalkowski/mhp/internal/pfs"
+	"github.com/PrzemekMalkowski/mhp/internal/procfs"
+	"github.com/PrzemekMalkowski/mhp/internal/shim"
+	"github.com/PrzemekMalkowski/mhp/internal/sim"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/web"
 
 	"golang.org/x/sys/unix"
 )

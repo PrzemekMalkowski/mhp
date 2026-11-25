@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
 )
 
 func TestPeaks(t *testing.T) {

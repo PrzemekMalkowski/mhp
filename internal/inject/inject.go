@@ -5,7 +5,7 @@
 // sigtimedwait, nanosleep, futex…), so it holds no allocator or loader lock. It is stopped with PTRACE_SEIZE +
 // PTRACE_INTERRUPT (the other threads keep running), made to call dlopen() and then mhp_attach() in libmhp, and
 // put back exactly as it was: its interrupted system call restarts. Each call returns to address 0; the
-// SIGSEGV that raises is caught by ptrace and never delivered. See DESIGN.md.
+// SIGSEGV that raises is caught by ptrace and never delivered.
 package inject
 
 import (

@@ -1,7 +1,7 @@
 package web
 
 import (
-	"mhp/internal/classify"
+	"github.com/PrzemekMalkowski/mhp/internal/classify"
 
 	"bytes"
 	"fmt"
@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
 )
 
 // The report is one self-contained HTML file for a time range: metadata, totals, the timeline around the range,

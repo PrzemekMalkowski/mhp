@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"mhp/internal/classify"
-	"mhp/internal/live"
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/classify"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 func TestGrowthAndGap(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	"mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
 )
 
 // fields decodes one protobuf message level: field number -> raw values (varints as uint64, bytes as []byte).

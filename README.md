@@ -11,7 +11,11 @@ for questions like "why is RSS 20 GB when the buffer pool is 12 GB?", "which par
 stack and time range, and each view filters the others.
 
 It works on any native process; MySQL, Percona Server and MariaDB get extras: sub-system names, a Performance Schema
-cross-check and links to the server source. `DESIGN.md` has the internals and all measurements.
+cross-check and links to the server source.
+
+**See it without installing anything: [example recordings](https://przemekmalkowski.github.io/mhp/)** of Percona
+Server 9.7 and 8.4 (InnoDB under large UPDATEs and an index build; MyRocks on glibc and jemalloc) and the overhead
+benchmark. Each recording is the whole mhp UI saved as one HTML file, which opens in the browser.
 
 ## Quick start
 
@@ -247,7 +251,7 @@ throughput change against a plain start of the same server, where a second plain
 | eBPF (entry + return probes on 5.14) | −61 % (−73 % at 32+ threads) | −34 / −23 % |
 
 mhp itself used 9–18 % of one core with libmhp (more with more threads), 20–55 % with eBPF, and 70–170 MiB RSS.
-The harness and interactive report: `reports/mhp-overhead-rocky9.html`.
+The interactive report, with these and the Percona Server 8.4.11 runs: [`docs/reports/mhp-overhead.html`](https://przemekmalkowski.github.io/mhp/reports/mhp-overhead.html).
 
 Rules of thumb:
 - For a full picture with negligible cost, **restart mysqld under `mhp run`** (or with the preload library), ideally
@@ -526,16 +530,7 @@ offline exports.
 - **Context**: the report metadata (host, server build and process, malloc library, mhp version, binary and log,
   how it traces) and the span of kept history; in an offline copy also when it was taken.
 
-## Example recordings
+## License
 
-Offline copies in `reports/` open in a browser straight from disk (no mhp, no network):
-
-- `mhp-offline-ps9.7.2-airportdb-glibc.html`: Percona Server 9.7.2 under `mhp run` (glibc), sysbench, then large
-  UPDATEs, a `SELECT DISTINCT` building a 0.5 GiB in-memory temporary table, an index build and a rolled-back
-  10M-row UPDATE on the airportdb sample database. `mhp-peak-ps9.7.2-airportdb-glibc.html` is the peak copy mhp
-  took by itself during the temporary-table spike.
-- `mhp-offline-ps8.4.11-myrocks-blob-glibc-peak.html` and `…-after-trim.html`: Percona Server 8.4.11 with MyRocks
-  under a blob-heavy sysbench workload on glibc malloc, at the RSS peak (34 GiB RSS for 10 GiB live) and after
-  `malloc_trim(0)`; the glibc arenas panel shows where the free memory sat. `…-jemalloc-peak.html` is the same
-  workload on jemalloc (12.5 GiB RSS).
-- `mhp-overhead-rocky9.html`, `mhp-overhead.html`, `mhp-overhead-rw-blob.html`: the overhead benchmarks quoted above.
+mhp is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+version 3 as published by the Free Software Foundation. See `LICENSE`.

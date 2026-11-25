@@ -1,7 +1,5 @@
 /*
-!/.gitignore
 !/README.md
-!/DESIGN.md
 !/go.mod
 !/go.sum
 !/bpf/
@@ -9,8 +7,7 @@
 !/internal/
 !/shim/
 !/scripts/
-!/vagrant/
-!/reports/
+!/docs/
 
 # build outputs (bin/libmhp.so, bin/mhp; the embedded BPF objects and mhp.wasm.gz stay tracked: go build needs them)
 /bin/

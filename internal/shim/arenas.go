@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 // ParseMallocInfo reads glibc's malloc_info() XML (version 1, glibc 2.10 and later). A truncated document (more

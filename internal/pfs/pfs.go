@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 const threadsQuery = `SELECT t.THREAD_OS_ID, t.NAME, IFNULL(t.PROCESSLIST_ID,0), IFNULL(t.PROCESSLIST_USER,''),

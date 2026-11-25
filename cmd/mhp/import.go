@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"mhp/internal/agg"
-	"mhp/internal/heapfile"
-	"mhp/internal/live"
-	"mhp/internal/model"
-	"mhp/internal/sym"
-	"mhp/internal/web"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/heapfile"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/web"
 )
 
 // allocatorObject: frames inside the allocator itself (its own backtrace and malloc entry), cut from the leaf.

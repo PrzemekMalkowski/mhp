@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"mhp/internal/web"
+	"github.com/PrzemekMalkowski/mhp/internal/web"
 )
 
 // TestAgainstLive compares an exported offline copy with the mhp it came from (both must cover the same data, so

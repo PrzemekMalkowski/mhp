@@ -12,9 +12,9 @@ import (
 	"time"
 	"unsafe"
 
-	"mhp/internal/model"
-	"mhp/internal/sym"
-	"mhp/internal/track"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/track"
 )
 
 // Offsets mirror shim/mhp_ring.h.

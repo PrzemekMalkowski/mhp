@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"mhp/internal/model"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 // Event types and layout mirror shim/mhp_ring.h (slot: commit, type, tid, ptr, size, weight, depth, frames).

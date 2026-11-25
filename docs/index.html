@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mhp example recordings</title>
+<meta name="description" content="Example recordings of mhp, the live memory profiler for MySQL, Percona Server and MariaDB: offline copies that open in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@500;700&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('mhp-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.dataset.theme='dark'}catch(e){}</script>
+<style>
+:root{color-scheme:light;
+ --bg:#eef3f1;--panel:#fbfdfc;--line:rgba(16,70,60,.14);--fg:#0c1a18;--ink2:#3f5653;--mut:#5a706d;
+ --acc:#0b8566;--warm:#a95a06;--chip:rgba(11,133,102,.08);
+ --disp:"Antonio","Oswald","Arial Narrow",sans-serif;--mono:"Azeret Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+:root[data-theme="dark"]{color-scheme:dark;
+ --bg:#05090c;--panel:#0b1217;--line:rgba(138,214,199,.14);--fg:#e6f2ef;--ink2:#a9bfba;--mut:#7f9692;
+ --acc:#6fe3be;--warm:#ffa847;--chip:rgba(111,227,190,.08)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 var(--mono)}
+.wrap{max-width:980px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-left)) 64px max(16px,env(safe-area-inset-right))}
+header{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px}
+h1{font:700 44px/1 var(--disp);letter-spacing:.02em;margin:0;text-transform:uppercase}
+h1 span{color:var(--acc)}
+.tag{color:var(--ink2);flex:1 1 300px;min-width:0}
+button.theme{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);background:transparent;
+ border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer}
+h2{font:500 22px/1.2 var(--disp);letter-spacing:.06em;text-transform:uppercase;margin:40px 0 6px}
+p.lead{color:var(--ink2);margin:0 0 14px;max-width:72ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+a.card{display:block;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;
+ color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--acc);transform:translateY(-1px)}
+.card h3{font:500 17px/1.25 var(--disp);letter-spacing:.04em;margin:0 0 6px;color:var(--acc)}
+.card p{margin:0;color:var(--ink2);font-size:12.5px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.meta span{font-size:10.5px;letter-spacing:.06em;background:var(--chip);border-radius:3px;padding:2px 7px;color:var(--mut)}
+.meta .hl{color:var(--warm)}
+code{font-family:var(--mono);font-size:12.5px}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:14px;color:var(--mut);font-size:12px}
+footer a,.lead a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <h1><span>mhp</span> recordings</h1>
+ <div class="tag">Example recordings of mhp, the live memory profiler for MySQL, Percona Server and MariaDB.</div>
+ <button class="theme" id="theme"></button>
+</header>
+
+<h2>Offline copies</h2>
+<p class="lead">Each one is the whole mhp UI with everything it kept, in one file: select time ranges on the chart,
+explore flame graphs, callers and call trees, check the glibc arenas, or export reports. It runs mhp's own code as
+WebAssembly, so it needs no server. Files are 6–14 MB; give them a few seconds to load.</p>
+<div class="grid">
+ <a class="card" href="reports/mhp-offline-ps9.7.2-airportdb-glibc.html">
+  <h3>Percona Server 9.7 · airportdb</h3>
+  <p>sysbench, then large UPDATEs, a <code>SELECT DISTINCT</code> building a 0.5 GiB temporary table, an index build
+  and a rolled-back 10M-row UPDATE. InnoDB is split into areas: MVCC old row versions, undo, row writes, DDL &amp; index builds.
+  To see the spike, select 18:01:08–18:01:20 UTC on the chart (the chart shows your local time).</p>
+  <div class="meta"><span>mhp run</span><span>glibc</span><span>debug symbols</span></div>
+ </a>
+ <a class="card" href="reports/mhp-offline-ps8.4.11-myrocks-blob-glibc-peak.html">
+  <h3>MyRocks blob workload · glibc, at the peak</h3>
+  <p>34 GiB RSS for 10 GiB of live allocations: 97 glibc arenas, 24 GiB of them free. The arenas panel shows where.
+  RocksDB is split into block cache, memtables, compaction, MyRocks row encoding and more.</p>
+  <div class="meta"><span>Percona Server 8.4.11</span><span class="hl">fragmentation</span></div>
+ </a>
+ <a class="card" href="reports/mhp-offline-ps8.4.11-myrocks-blob-glibc-after-trim.html">
+  <h3>MyRocks blob workload · after malloc_trim</h3>
+  <p>The same run after <code>malloc_trim(0)</code>: the free chunks stay in the arenas but leave RSS. Select a time
+  before the trim to compare resident free memory.</p>
+  <div class="meta"><span>Percona Server 8.4.11</span><span>glibc</span></div>
+ </a>
+ <a class="card" href="reports/mhp-offline-ps8.4.11-myrocks-blob-jemalloc-peak.html">
+  <h3>MyRocks blob workload · jemalloc</h3>
+  <p>The same workload on jemalloc: about the same live memory, 12.5 GiB RSS.</p>
+  <div class="meta"><span>Percona Server 8.4.11</span><span>jemalloc</span></div>
+ </a>
+</div>
+
+<h2>Overhead benchmark</h2>
+<p class="lead">The measurements behind the numbers in the <a href="https://github.com/PrzemekMalkowski/mhp#what-it-costs">README</a>.</p>
+<div class="grid">
+ <a class="card" href="reports/mhp-overhead.html">
+  <h3>What does watching memory cost?</h3>
+  <p>Throughput change for every mhp mode against a plain start of the same server, 1–64 threads: Percona Server
+  8.4.11 on Ubuntu (read-only, read-write, blob), MySQL 8.4, 9.7, 26.10 and MariaDB 12.3, 11.8 on Rocky Linux 9.</p>
+  <div class="meta"><span>throughput</span><span>6 servers</span><span>every mode</span></div>
+ </a>
+</div>
+
+<footer>mhp is free software under the GNU GPL v3 ·
+ <a href="https://github.com/PrzemekMalkowski/mhp">source on GitHub</a></footer>
+</div>
+<script>
+(function(){var b=document.getElementById('theme'),r=document.documentElement;
+function lab(){b.textContent=r.dataset.theme==='dark'?'☀ light':'☾ dark'}lab();
+b.onclick=function(){var d=r.dataset.theme!=='dark';if(d)r.dataset.theme='dark';else delete r.dataset.theme;
+try{localStorage.setItem('mhp-theme',d?'dark':'light')}catch(e){}lab()}})();
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 type workload struct {

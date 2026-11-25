@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"mhp/internal/inject"
-	"mhp/internal/model"
-	"mhp/internal/sym"
+	"github.com/PrzemekMalkowski/mhp/internal/inject"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/sym"
 )
 
 const MiB = 1 << 20

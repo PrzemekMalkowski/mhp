@@ -10,7 +10,7 @@
  *
  * - Injected (mhp watch -inject): loaded into a running process with dlopen, where its symbols interpose nothing.
  *   mhp_attach() then creates the ring and points the GOT slots of every loaded object that hold malloc & co at the
- *   functions below; mhp_detach() points them back. See DESIGN.md.
+ *   functions below; mhp_detach() points them back.
  *
  * - The allocator underneath is whatever malloc comes next in the process: glibc's, or a preloaded jemalloc /
  *   tcmalloc (LD_PRELOAD="libmhp.so libjemalloc.so.2"). Those define operator new/delete themselves, which the

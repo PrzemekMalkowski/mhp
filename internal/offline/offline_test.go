@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"mhp/internal/agg"
-	"mhp/internal/live"
-	"mhp/internal/web"
+	"github.com/PrzemekMalkowski/mhp/internal/agg"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/web"
 )
 
 func TestPage(t *testing.T) {

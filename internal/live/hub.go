@@ -5,7 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
 )
 
 type StackRow struct {

@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"mhp/internal/classify"
-	"mhp/internal/live"
-	"mhp/internal/model"
-	"mhp/internal/procfs"
+	"github.com/PrzemekMalkowski/mhp/internal/classify"
+	"github.com/PrzemekMalkowski/mhp/internal/live"
+	"github.com/PrzemekMalkowski/mhp/internal/model"
+	"github.com/PrzemekMalkowski/mhp/internal/procfs"
 )
 
 const (
