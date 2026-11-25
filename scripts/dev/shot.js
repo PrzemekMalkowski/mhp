@@ -1,0 +1,34 @@
+// Screenshot the three mhp UI tabs and report JS errors.
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch();
+  const p = await b.newPage({ viewport: { width: 1400, height: 1000 } });
+  const errs = [];
+  p.on('pageerror', e => errs.push(e.message));
+  p.on('console', m => m.type() === 'error' && errs.push(m.text()));
+  const dir = process.argv[2];
+  await p.goto('http://127.0.0.1:8080/');
+  await p.waitForTimeout(2500);
+  await p.click('nav button[data-tab=ov]');
+  await p.waitForTimeout(1200);
+  await p.screenshot({ path: dir + '/ov.png', fullPage: true });
+  await p.click('nav button[data-tab=th]');
+  await p.waitForTimeout(1500);
+  await p.screenshot({ path: dir + '/th.png' });
+  await p.click('nav button[data-tab=ex]');
+  await p.waitForTimeout(2000);
+  await p.screenshot({ path: dir + '/ex.png' });
+  await p.selectOption('#xm', 'faults');
+  await p.selectOption('#xv', 'callers');
+  await p.waitForTimeout(1500);
+  await p.screenshot({ path: dir + '/ex2.png' });
+  await p.selectOption('#xv', 'tree');
+  await p.waitForTimeout(500);
+  await p.click('#tree tr[data-i="0"]');
+  await p.waitForTimeout(300);
+  await p.click('#tree tr[data-i="1"]');
+  await p.waitForTimeout(300);
+  await p.screenshot({ path: dir + '/tree.png' });
+  console.log('errors:', JSON.stringify(errs));
+  await b.close();
+})();

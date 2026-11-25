@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mhp live memory</title>
+<script>try{if(localStorage.getItem('mhp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
+<style>
+/*@fonts*/
+/* mission-control console: near-black teal panels, condensed display type for headings and readouts,
+   monospace for everything else, uppercase tracked labels, mint accent / amber caution / red alarm */
+:root{color-scheme:light;
+ --bg:#eef3f1;--panel:#fbfdfc;--panel2:#f3f7f5;--line:rgba(16,70,60,.14);--line2:rgba(16,70,60,.3);
+ --fg:#0c1a18;--ink2:#3f5653;--mut:#5a706d;--card:var(--panel);--bd:var(--line);--row:rgba(11,133,102,.06);
+ --acc:#0b8566;--warm:#a95a06;--bad:#c42f26;--hi:#b8650a;--pos:#c4442f;--neg:#0b8566;
+ --head:#071311;--h2:#1d3531;--tdn:#0c1a18;--acctext:#075e48;--acchov:#064a39;--warmtext:#7f4304;--badtext:#a3261f;--selfg:#071311;
+ --accr:11,133,102;--warmr:184,101,10;--badr:196,47,38;--liner:16,70,60;--wr:16,70,60;--glow2r:60,90,200;
+ --top1:rgba(251,253,252,.95);--top2:rgba(238,243,241,.6);--pan1:rgba(252,254,253,.97);--pan2:rgba(246,250,248,.97);--shadow:rgba(20,50,45,.22);
+ --cvbg:#fbfdfc;--tipbg:rgba(252,254,253,.97);--fltext:#0c1a18;--flhl:#fff8ee;--logo:invert(1) hue-rotate(180deg) saturate(1.4) brightness(.8);
+ --s1:#0b8566;--s2:#3a5fd0;--s3:#c8366b;--s4:#6a4fd0;--s5:#0a7fa0;--s6:#5f7d0c;--s7:#c0552b;--s8:#2f7d70;--s9:#5d7471;
+ --disp:"Antonio","Oswald","Arial Narrow",sans-serif;--mono:"Azeret Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+:root[data-theme="dark"]{color-scheme:dark;
+ --bg:#04070a;--panel:#080d11;--panel2:#0a1116;--line:rgba(138,214,199,.115);--line2:rgba(138,214,199,.26);
+ --fg:#dfece9;--ink2:#8ba3a0;--mut:#6b8382;--card:var(--panel);--bd:var(--line);--row:rgba(111,227,190,.055);
+ --acc:#6fe3be;--warm:#ffa847;--bad:#ff5e54;--hi:#ffa847;--pos:#ff8a7a;--neg:#6fe3be;
+ --head:#eef7f4;--h2:#c7dcd7;--tdn:#e6f2ef;--acctext:#bff5e2;--acchov:#d9fdf0;--warmtext:#ffdfae;--badtext:#ffcfcb;--selfg:#eafff7;
+ --accr:111,227,190;--warmr:255,168,71;--badr:255,94,84;--liner:138,214,199;--wr:255,255,255;--glow2r:120,158,255;
+ --top1:rgba(8,14,18,.9);--top2:rgba(4,7,10,.35);--pan1:rgba(11,18,23,.92);--pan2:rgba(6,10,13,.92);--shadow:rgba(0,0,0,.9);
+ --cvbg:#03060a;--tipbg:rgba(5,10,13,.96);--fltext:#e3efec;--flhl:#1a1206;--logo:none;
+ --s1:#6fe3be;--s2:#789eff;--s3:#ff7aa2;--s4:#a884ff;--s5:#7ee8ff;--s6:#c8e66e;--s7:#ff8f6b;--s8:#4fb3a0;--s9:#8ba3a0}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--fg);font:12.5px/1.45 var(--mono);letter-spacing:.005em;-webkit-font-smoothing:antialiased;
+ background:radial-gradient(1200px 700px at 18% -10%,rgba(var(--accr),.055),transparent 62%),radial-gradient(900px 600px at 96% 104%,rgba(var(--glow2r),.05),transparent 60%),var(--bg);min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-size:44px 44px;
+ background-image:linear-gradient(rgba(var(--liner),.028) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--liner),.028) 1px,transparent 1px);
+ -webkit-mask-image:radial-gradient(120% 90% at 50% 30%,#000 20%,transparent 88%);mask-image:radial-gradient(120% 90% at 50% 30%,#000 20%,transparent 88%)}
+::selection{background:rgba(var(--accr),.28);color:var(--selfg)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+a{color:var(--acc)}code{font-family:var(--mono)}
+.hidden{display:none!important}
+
+/* masthead */
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:9px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--top1),var(--top2))}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+#logo{height:34px;width:auto;display:block;filter:var(--logo)}
+.brand h1{margin:0;font:600 1.5rem/1 var(--disp);letter-spacing:.045em;text-transform:uppercase;color:var(--head);white-space:nowrap}
+.sub{font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--mut);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46ch}
+.sep{width:1px;align-self:stretch;background:var(--line)}
+.tstats{display:flex;gap:18px;align-items:center;flex-wrap:wrap;min-width:0}
+.ts{display:grid;gap:1px}
+.ts b{font:500 1.22rem/1.05 var(--disp);letter-spacing:.028em;font-variant-numeric:tabular-nums;color:var(--head);white-space:nowrap}
+.ts span{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+.ts.warn b{color:var(--warm)}.ts.bad b{color:var(--bad)}
+.spacer{flex:1 1 auto}
+.theme{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);background:transparent;padding:4px 9px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 9px 4px 7px;border-radius:2px;border:1px solid var(--line2);background:rgba(var(--wr),.02);
+ font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);white-space:nowrap;max-width:40ch;overflow:hidden;text-overflow:ellipsis}
+.pill i{width:6px;height:6px;border-radius:50%;background:var(--mut);flex:0 0 auto}
+.pill.ok{color:var(--acctext);border-color:rgba(var(--accr),.42);background:rgba(var(--accr),.09)}.pill.ok i{background:var(--acc);box-shadow:0 0 8px rgba(var(--accr),.9)}
+.pill.warnp{color:var(--warmtext);border-color:rgba(var(--warmr),.45);background:rgba(var(--warmr),.1)}.pill.warnp i{background:var(--warm);box-shadow:0 0 8px rgba(var(--warmr),.9)}
+.pill.badp{color:var(--badtext);border-color:rgba(var(--badr),.5);background:rgba(var(--badr),.12)}.pill.badp i{background:var(--bad);box-shadow:0 0 8px rgba(var(--badr),.9);animation:blip 1.1s steps(1,end) infinite}
+@keyframes blip{50%{opacity:.15}}
+
+/* tab bar */
+.tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 12px;border-bottom:1px solid var(--line)}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{font:500 .9rem/1 var(--disp);letter-spacing:.16em;padding:6px 14px;border-color:var(--line)}
+nav button.on{background:rgba(var(--accr),.12);border-color:rgba(var(--accr),.55);color:var(--acctext);box-shadow:inset 0 -2px 0 var(--acc)}
+.acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.acts a{font-size:10px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;padding:5px 4px}
+.acts a:hover{text-decoration:underline}
+
+/* controls */
+button,select,input{font:inherit;font-size:11px;color:var(--fg);background:rgba(var(--wr),.025);border:1px solid var(--line2);border-radius:2px;padding:5px 9px}
+button{cursor:pointer;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;transition:background-color .2s,border-color .2s,color .2s}
+button:hover{background:rgba(var(--accr),.13);border-color:rgba(var(--accr),.55);color:var(--acchov)}
+button.on{background:rgba(var(--accr),.12);border-color:rgba(var(--accr),.55);color:var(--acctext)}
+select{cursor:pointer}select option{background:var(--panel2);color:var(--fg)}
+input::placeholder{color:var(--mut)}input[type=checkbox]{accent-color:var(--acc);vertical-align:-2px}
+label{color:var(--ink2);font-size:11px}
+#trc.off{color:var(--warmtext);border-color:rgba(var(--warmr),.6);background:rgba(var(--warmr),.16)}
+.clr{display:inline-flex;align-items:center}.clr input{padding-right:20px}
+.clr button,.chip button{margin-left:-22px;border:0;background:none;padding:0 6px;color:var(--mut);font-size:14px;line-height:1;letter-spacing:0}
+.chip button{margin-left:0}
+.clr button:hover,.chip button:hover{background:none;color:var(--fg)}.clr input:placeholder-shown+button{visibility:hidden}
+
+/* panels */
+main{display:grid;gap:9px;padding:10px 12px 12px}
+section{display:grid;gap:9px;min-width:0}
+.panel{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:3px;
+ background:linear-gradient(180deg,var(--pan1),var(--pan2));box-shadow:0 18px 40px -26px var(--shadow),inset 0 1px 0 rgba(var(--wr),.018)}
+.panel::after{content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;pointer-events:none;border-right:1px solid rgba(var(--accr),.42);border-bottom:1px solid rgba(var(--accr),.42)}
+.ph{display:flex;align-items:center;gap:8px;padding:6px 10px 5px;border-bottom:1px solid var(--line);min-width:0}
+.ph .ix{font-size:9px;letter-spacing:.1em;color:rgba(var(--accr),.72);font-weight:500}
+.ph h2,.ph h3{margin:0;font:500 .82rem/1.2 var(--disp);letter-spacing:.185em;text-transform:uppercase;color:var(--h2);white-space:nowrap}
+.ph .hint{margin-left:auto;min-width:0;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb{padding:8px 10px 10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}@media(min-width:1100px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.note{color:var(--mut);font-size:11px;margin:0}.note b{color:var(--ink2)}
+.bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--ink2);font-size:11px}
+.bar .lbl{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+
+/* readouts */
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:2px}
+.c{background:var(--panel);padding:7px 10px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.c>span:first-child{font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--mut)}
+.c b{font:600 1.6rem/1 var(--disp);letter-spacing:.012em;font-variant-numeric:tabular-nums;color:var(--head);padding:2px 0}
+.c>span:last-child{font-size:10.5px;color:var(--ink2);overflow-wrap:anywhere}
+#acc th{white-space:normal}
+td.sub{padding-left:26px;color:var(--ink2)}td.sub::before{content:"└ ";color:var(--mut)}
+.armap{display:flex;gap:1px;height:34px;align-items:stretch;margin-top:6px}
+.armap i{flex:1 1 0;min-width:1px;background:linear-gradient(to top,var(--acc) 0 var(--u),rgba(var(--warmr),.78) var(--u) 100%);opacity:.85;cursor:default}
+.armap i:hover{opacity:1;outline:1px solid var(--fg)}
+.armap i{cursor:pointer}.armap i.pick{opacity:1;outline:2px solid var(--warm);outline-offset:1px;z-index:1}
+#art tr[data-n]{cursor:pointer}#art tr.pick td{background:rgba(var(--warmr),.16)}
+.lgd{display:inline-flex;align-items:center;gap:4px;margin-left:8px}.lgd i{width:9px;height:9px;display:inline-block}
+.meter{height:3px;border-radius:2px;background:rgba(var(--liner),.12);overflow:hidden;margin:2px 0}
+.meter i{display:block;height:100%;background:var(--acc);box-shadow:0 0 10px rgba(var(--accr),.7)}
+.meter i.warn{background:var(--warm);box-shadow:0 0 10px rgba(var(--warmr),.7)}.meter i.bad{background:var(--bad);box-shadow:0 0 10px rgba(var(--badr),.7)}
+
+/* charts */
+canvas{width:100%;display:block;background:var(--cvbg);border:1px solid var(--line);border-radius:2px}
+#cv{height:300px;cursor:crosshair}#cvw{position:relative}
+.lg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:10.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.08em}
+.lg i{display:inline-block;width:12px;height:8px;border-radius:1px;margin-right:5px;vertical-align:0}
+.lg span[data-k]{cursor:pointer;user-select:none}.lg span[data-k]:hover{color:var(--fg)}.lg span.off{opacity:.35;text-decoration:line-through}
+.lg .when{color:var(--mut);letter-spacing:.14em}
+
+/* tables */
+.tw{overflow-x:auto}
+.panel>.tw{max-height:none}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+td,th{padding:4px 10px;text-align:left;border-bottom:1px dotted rgba(var(--liner),.11);vertical-align:middle}
+th{font-size:9.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);white-space:nowrap;position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line)}
+th.s{cursor:pointer}th.s:hover{color:var(--fg)}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--row)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--tdn)}
+td.f{word-break:break-all;color:var(--fg)}
+td svg{color:var(--acc);filter:drop-shadow(0 0 3px rgba(var(--accr),.5))}
+.pos{color:var(--pos)}.neg{color:var(--neg)}.dead{opacity:.45}
+#ctx th{position:static;width:1%;vertical-align:top;padding-right:16px;background:none;border-bottom:1px dotted rgba(var(--liner),.11)}
+#ctx td{word-break:break-word}
+
+/* explore */
+.crumbs{font-size:11px;word-break:break-all;color:var(--mut)}.crumbs a{color:var(--acc);cursor:pointer}
+.src{font-size:11px;color:var(--mut);min-height:1.4em;word-break:break-all}.src code{color:var(--fg)}.src a{margin-left:10px}.src .hint{opacity:.7}.src button{font-size:9.5px;padding:1px 6px;margin-right:4px}
+.tree td.f{cursor:pointer}.tree tr.hit td{background:rgba(var(--warmr),.1)}.tree .tg{display:inline-block;width:14px;color:var(--mut)}
+#treew{max-height:72vh;overflow:auto;border:1px solid var(--line);border-radius:2px}
+
+/* range bar */
+.rng{display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;font-size:11px;padding:8px 10px;border:1px solid rgba(var(--accr),.5);border-radius:3px;
+ background:linear-gradient(180deg,rgba(var(--accr),.07),rgba(var(--accr),.02));box-shadow:0 0 24px -12px rgba(var(--accr),.5)}
+.rng b{font-variant-numeric:tabular-nums;color:var(--head)}.rng .warn{color:var(--warm)}
+.rng .full{flex-basis:100%}.rng table{width:auto;margin-top:4px;border:1px solid var(--line);background:var(--panel)}.rng th:not(:first-child){text-align:right}
+.chip{display:inline-flex;align-items:center;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(var(--accr),.5);color:var(--acctext);background:rgba(var(--accr),.08);border-radius:2px;padding:3px 4px 3px 8px}
+
+/* tooltip */
+#tip{position:fixed;pointer-events:none;z-index:9;display:none;max-width:520px;border:1px solid var(--line2);background:var(--tipbg);border-radius:2px;
+ padding:6px 9px;font-size:11px;line-height:1.5;color:var(--ink2);box-shadow:0 10px 24px -12px var(--shadow)}
+#tip b,#tip code{color:var(--head);word-break:break-all}
+
+footer{display:flex;gap:14px;flex-wrap:wrap;padding:8px 14px 10px;border-top:1px solid var(--line);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut)}
+footer b{color:var(--ink2);font-weight:400}footer .spacer{flex:1}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style></head><body>
+<header class="top">
+ <div class="brand"><img id="logo" alt="DBrains" title="mhp, a DBrains tool" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIsAAABACAYAAAAqNoSIAAAeFElEQVR42uy9CXxV1b3+/X3WOQkQAk7FotZWq95e9aqttrW3VSA4gDgCChUZElTsW+vQalVAC1EgaK116nUqJExaIo5VgaokhGqrt7XVtrbqrVa9WtFXVIaQ5Jy9nv/nZE6IV1RAqzz77LXX2cNaa6/1rN9vzTvNRwGbH85a1qtbXt7etr8YY/J5UF+FsJ2gAOgBBMCSVsckrkG8bvOSxKsKqb+trU//45oJ/xnZii0GbUnPJlVU7RMTn450CHhfifyAMJYxUgoBABgAEGDTuBlLonEL4S3jPxG9nBAW166uf+KnZx2R3ZqknwCyXDTr4fEhhOuMu4GV+wlJAhBgQACgTgEzuAN7AGwLMFYISHods9DR5c++tfJPt/9ghLcm778gWSbOXnYI0jKZFCDAAGrPFcCmI2kAWh8wQqD292GQGk8JQNg24tmgsBCYO21cvxe2JvOmQdginoSwv6RWv6Q2nhiwOxAA6Gh3J2pLHQwMwghbAgm+ZMcf2X52UsXy+yeWV++9Nan/RcgSs9lqQRYB6kqgGTD2hvKkbRe0J5Y7PosAANFCGAkH8CDg8YnlVaUXzFrWe2uSf3BssTLL5IrqIY7xBqTPtSoPANxi6aSA1LmUCy2muyjXANDe3VbYgMHAW0hlmYbMz358+uH1W5P/Y0oWgItu+VVBSOePBZ+B2A+Q3CkcBgOig9F6wV1wSKKDWOnMFAkMAMZg9LSl08uK+/0W4Bs/WaiDV+/Itn3g0doGVvV+wb//zne2suOjJEsLSmberV36bjfY+ELb35IdkAQC3JWYAcDuWgYBSADqUsu55XY3/YvYQakM4o+2t8UUSspDyHYCrAfedvQbCnoV+IetF5D/2lBb+5efrOyxHqqhtHQrWbYUDjr9RgZ980t7A9+TKLbpLtAGfDCtcBeqSbQ+1Wp3++eEsTG01ZkkANTyDGDAGFlNRzWftxtNCCAykl529J+Nf+/IU0F+fMb4gSu3kmUL4eK5NbvHJLlB5gjUWS25AyE6kKWtBt3uinDj1myXXZAyPUJC91SkWzApWUHYRpkIGYuGmGJ9DK7NBCWGEGQAjJpda8dObIxtSyFGxz/JYZGDbptZ3P8fW8mymfG9a6pS2/TWtcbfEQDIBrXRBdSZLO2I0r7SJMhzZLtuibbNS8hPuVnLGHfx7gKQADuToNXZFG9n0q6PAWwZtXcfISxsjDo61xCjHwJuzTRk7rzyO0fWbyXLZsL351eHgixTgEnYAZDbp26nxl53LJAgicK86O3zsxSmE8lgAHCXeg2w27jS1vBnANcmgTfrU6zOpGi+Cm23YXBnGhs7t0vhlWgW2FSuW1v7x+vOHrKVLJscNpPn1Fxmx4lAUNtpOoqQjuWXbsH+XM+seqSiAbWqo5aUN0gAaqOYLWMESCJIuPk8AGCAuiTwcm2aBgtZoIAA404SSi0WAziaiI3CLwOcPb1kwMtbybKJcf6spT3yQt4LsvpIqCNROgVd0CudeNeeWQIGLBskGQmMEX+JMVaHkHoU6dkk4e1MkmnIT+cXpgI7Rif/JnSI7cOwdwYLkA1BGEE2ipfX5+ekjSUaz7aFC7VjY4dCM9g2NloPvkFy6YySgeu2kmVTwWbSnOqbsE/Dgk45GARASrBLzyy909lObJIRz0paGE1lr9T2fz322K921WjXAfPvuD9IqW8AY8DDsHcQCAkAQzYTw9yXavMXZaL2M94f6RuYL9oGUIcAIsAtPDICo+ccPcXi9pklRXErWTYFWebWnOeYvSI4QKt0MQAgJNitsIHCVMRt521okHTe+lB/w6nHH/+Be5/n3b60IKR8JY4TOsWVQTens6u/O3LkSK6pfEKr6td9JUafYMexdtwVBABG7Z8Uws1tPVgrwCPKxg98YytZPiQmzVl+rmL8iQGBANz0x3bk8wUZtu1m7KYzBpD+REiPPeWEI57aFGG46d57KcjkjRf+qaBnW1lGlnTuqGGDr28vrX5UvrwgBg+1mQD+pqODANrukQ2ALVvoL+BjZpQMfHkrWT4MWSqW53L193EH7WELdurewA55CQhsEGCpSub4UcOP2uTlgbmLFn85iMU47ogtpJyRUQhDRw0bvLjz/T+pfFRvr88em8SkzPaXGm9HYIQBgSQDRPMq1ollpw54bCtZPgAmzqnZRo5/wP4C7aq2Rt4+P0Pfbg1qjmzZtkK4VQrfGTV0UJdEKZ3768JILIrmkBjjnigUtCSgHY0aEYB1mBeEnpT8yC7rC/7njDO+CsC8RYsPEL4feyfT+AhSbsSe+o0ePvjprvz94ZzqVJ51GI4XR/ub2BLknhOAMAYj6kBnzCgpmr+VLO8DF1fU7GHHhSZ+WZaMBRiJPEXt1aveAgEYIuiazOru55WUFHXt3pyaUTheZ9imnSTq8t3dZrMQQeFe2WdfWtz/fwEW3LlkD9srsD8LRhJGvxo9/Kij/q93Ov/6+0Jez8JixzhT8g6yQEgIAMBICWLC9OIBFVvJshGYWF41StaNBBfIElgYjA1i98J6ejYWaAEAhUcSe8DY4Ud1Wau4pGL5GZF4rSEFCGQhgTveqLZaCxjZSAGEhVYbn5d63uWlpUXMvf2BQyU/KJOPyEm1GEI47OQTBtW81/tNKn94Z1t3AF+TaT+2FABw1jBmRsnAhVvJ8q6NcCsOtuNkE4+SFGQAJLAB2/TplrBj9wy0EWWVxbdGDx387IZOmkvm1JwViVcBwQCQlcMySX9ErAO3+pL7OTq39wL2BvcD92yXkg7SzzLr1p4787vHeN6iB8oEF0iAZKS/W+Gg0SccufY9M8Sc6p5ETxE+G5PX5DlCANiQDYSTppX0v3crWdrhpMpK9lq340TkS7ECtMaaBFgYIJDwpV71qPm0bUI67+RRJxxR2ZW7U+as+PeskycNaQDj50UYMaO4/x82JlwXV9T0NB4PcRpQKAmBBVcuf77qotMP+EYh5m/CfQFJISdhppx8wpHTN/bdL65YPiA6uct274BAEgDIxquTGL9++amHPfdxIUv4KD0//6aHCvZY85lbwJc2dwK3SOXcDuBGi+Rt853Flm3AKITqV1b/8/Z3cztxMto4BQCsC0ods7FEAZhW3G/d9OL+10E4FlhrN/tsflC0x8DjTxk6eC1wadM5Y0dhT7itcknexvvRvxo0AZQ0uWEAwAJ6K4RfXHjzg4WfeskyaXbV1yzmCfYSqIuBSwYySHenpTl79lxXZsf9aBoAXo/Cl08ZOqiD+rlkzvIvGg3B7GfiScbbgJDC1dPH9TvvPdVDefVeRE5W0M4Sj4FunV7cr37SnJoDg+M9xjuDCNLKbumw/xcK1r2j6MdwPEBSLlw2On7U0EH3v6+4KK8ajj0L6CUkAAOIaPNgJsbjrjztsMxHTZb0R9IyW151NHCr7MKOM4eMkCUMPCOFkv/o/trjDXnbHExkXwGSiGbxmGFtRJk6v6YgybosOp5hSKtNnIOxTXlXQZk8Z3nvGDlY+DNGvcA/Jrinmx47LRCGnz936TEzxhz6xOQ5NWOMHwQHWzs2ZH3qmKGDL593x+IfC80DZBB4CPC+yDKjpOiOiyuq3ojRS4270QJLwJF5qXAGcP2nSg0ddPrpTJz98LmGO8CFAujQe4KB9QqpSSn5oEvH9nt8xIgROElG4iiaVZLQL1uJMre6b0yoifhMIC9YAgEyJkq66Yl31v65g/q7ZXlqcsXycx39d5wstj1PxP8SFApJtjByjIPykm5fQuKZ+/pVgx4FE5u2IwAg3ItYA4AN6OAPEjfTiotqJF2nTlMaBAATL5r9cK9PDVnO/eldGvSfo8oI4UqJvJa5QwJbud1GPAgcfOmYQ6+YOraoDmDWXfengBMACcDOhlTIJTCXzvt1j8RamBC/DAhki5WCSqFpUjhkyfqCM5ecM6RN1cyqKsxLxftjjD82cTs1AxA2OIIBIsYy7gOwaJHALMQgkNBBl81d0W30sCNrgd8A2I3GPvPuWLxtVxL1vZCFUoIeR1gAGLBk95XCzy686UF94tXQObfcEwrztrk+Ok4IRoCQMCAAWJ1Sqjg8v+ye0k6DoPOd2gfirlJzWsLjhxyw10qAxP5JtL+FGjfbzF+fTZ3x09MOfdfRaZIuNfFw5BZyJeB1jka4FyAAG0B1dmhtmbX0O4wBGXpZ7AX8RY3nPQiMTX466CDg4Q5E0Xun8+UlResurqgZbpI/gncQYARCwCilUw8Bcz+xkuXCygfVM6/39bZPB9S8t2ZDm1VCR182rv8GRAEI5iAJ2Sa3gR7dbbfduHT+8j2SmBTbEcCg/86mUt9tJYq9QW6eVF79NeQJCACEnkBhn8xadiAVdpLCEgjRYFCtpO9ePr7/KgCAlEKT3ca5XRQAgP5um2gDEM2/dWLo+1BH/V6VNDGCDRYgsCQUwiU/vPnBbp9IyXLSlEpS69Jl4AkYSWpHFRuojPiHM4uLXnk3N4z3w4CEjAnhd2+++SaZhB9Ex/zG84R3DN++YvQhtZOzK/pY8RBXLP8i0J3yqoAdJPUFRhp3BwRaBeHbZeP6Pw8A1J3z07uOLdxu+/0j3sni92XjBnQYOhBj3EWAFADn8DrgJPpFQbOoMoJdP0y8xbXZ2eqZOg3768bGEji37Z7OS5cAN37iyLLXF/pcaPv8AAIJADAYYOaMgjcuZuTI/1v0SZ9HyAZjUiH10t2/fTKI1DAAGyK+eca4fi9Oqqg5y/IVEPMEogUCYSwjg6WMHb5dVtJKFACu+f5QA0827xvAjqdICEDiNde+/aIk5i1asqopSRsBos+Hibey7x3uyRXVPzH+BUY0EyZIGMomllf/pqxkwJOfGLJMKl822vZlApn2JRTnXvvaGGsveS+iABh6YQAQkEkya1euKehts4MBACk8Oqmi5hSIVwIpCJIADDaNmwACiPqgcPr04v4Pv7tIPKn5WAl9qjnvReflR40HjwUwOBAeLD3jOAMoKHEECQwEhdSHjb+GbOa+/HT6f2OuvOYO86J6I1ZMnlNzrR2vnlE84P//lybLpFkP7ePIDRIpJKmtgGehaakveOq0ovce6T5lioGlKTAAFtjGQfkQJQkswHsKT404JYIAmrv8a03uRDCw1uhpicunj+u/vLNfE8urcs8OExxtvK+hB+uWS7UCtKMVtwOEhGjM57e0j0chGQDjmDR82Dj88WlH1E2uqL7c1nUYCZq9BqCnnVyENWHS7Or5Ee6opeG3144/MvmXIsuFNz3Uy4QFxgVCAjAyYEnTnyl4fertRSM2yq3SUrHgzsVvAdjNAU6ntsu8nXlW6XQtuCcyOF5uOUcKSXoH9D2RvjPVQP2q9W8D8M/n13jR1V1LsotmVR0A+jmKXwEhWwACQBgjAcgB1SH9sHTMIb+5dCwAOMbt1WGCpDbJMMmo7M0i9U0TT1aLUhatnljsAD4nwNmFynt9Ynn1byU9FRR+G2Py+OrP1q66fsiQjydZzrn6nqBUuBWxn5BAYGzZoOvWrK6dcnvxiPfr7IuAASHJ0bvzcs0j7D7wPsFIQEBKzXk6KIy7bGy/X3YSUfDTqdAFWS6eWzMwSZK7IPY0kgA6TidoXZ4sSH8MITWudPQhf2m+EwBJuwrLAgAFbZIhkmXjDk/OvWpRcY9tt+9uMVQytpAAyP1t36T5WcHxEsebaETSa2WPFyeVV1fFGH+dCuGRlStf/sfPLxwd30/tbLORpUevXhcgjgIkADCAFG5dn6077wNNsjLP2a3JSLQOLC0tnT9lTtEUo8G2tzEGDNZd4e8PNxJl8vxf5ykb/z/bQ43rKK++eoa9tH1ETSyv2snRCyQXGuU2I/1VYiFojZsdTinUyv5rQbfw2EUjD0nUKbJDYM8YEQZEVAjPbKo4vfoHJybnz374lHxSP7LjWYieGAkZAEAbDPAVgrTRHsZfDEGnIrxj311fnTy35pE4u/r3Nstq17z+1LXnjtho1bXJWgQnlVcNAJZg54EABLZhcRI07Iriog+kx+ffsXhv7KckWipVz9TWpfc9fdThnjqvZrckiROM+2I9Cf75tJKideDcEINy4zEAYNmOQjcaVkBjzWIb22da3hcQkIFwZjYdy68YvfHTM6655gH67BoetONhICuoLsak7+jhR6/Z1Cp+YsXy7YI0xo4jJB1oOx/adD3tIIENjaaEgKa/EJuvAGswTyM9GhSqMkn2N1ecOvCtzUqWC/9rabfQPe9JwV4gSWAA85LtA8tOHbjqg7o9b948hYId/gbsCQCKJnxl9PBBf27TMlNo36A3ac6KHeTsy5huUgfiYhoPCLWbnmg3VuWLiy5+v+FbeN+D2yQNySt27CEJpMdHDR38n2xmTK749XZWPAE7tx8K7g0ASLlfG09o97cNwu3/gB3tBtzY9jX98vEDNxhHs0lacNM9uk0G9gIEYDBonaWTPgxRAMaMGWOj+wEwIESuub4dOrf8dkul+gJ5apfJhBRQblNuR81JK1kKy7Ji2gcJX7Y+O8x2dxAg58jCFsD04kPemjH20PIZ4/odX4t2IaSOQrpSaDniHbt1hIxzm8EIAy2GWnrlRO6IAuqm4NEp6amJ5VU3XVTecVk1fXj1U32siYtkpQEBtlhvOGFmSdFDmyJibr1rSU4VPRmj02p6rScb1O2gkqFFXfbOXTzv1wXE7POYPu0nugvVIb9uiEIZw1OSFmQy9b+ceeoR73tm4II7H+hm6/eCvcFIwYQwaNQJRz7MRwZz4azleakUe2H2kNg32vs0S/0vGffGbu07FQYQYAAQbt5Afwti/PTiosc+NFkmznr4swq5jjZvCxJgA7mqZVnxgKs21esvXLiQJH+bKsfYDwDJEMacMmzQbe/2zJS5NcUR32IcMDasDwpDLxtz6ENUV8Mbb8CIER8qXAvuWno+jjOJlhu7bsKz3Qu097BBgzb/Grx2m32jajfmrBuXhcL89F4KHAQMsOMAwe5gAUI0HSyMAbBdbzR85viixR+OLLOXzUScLyMAJAyPJ0nS/4rTDm/YlHHzi7uXnhFj/C8bJEB6WeTtf/LQw1Z3HZdm6ryagRFOcvS6IG65dNyATVZLmXfH4j5BekY4V1AGGtny3VFDB920ZQWJ+UBVYRuAS+au2CmJyUm2vy3xtWbX1HQA5yC96Rj/TR9c/VQdYLxCqKdAxjb6Q2INvmL8pm+CXnjPr3pHxz86xi/YgATonnQ6/6SRxw1MtmT6VFZWUh8KbxQ+vVWch/BYkon9x4w4KrNFiQIfjCydkKskZHYv2sf21bYPaynUYWwBcN4HKuBOqqjpibg9RxRANoBWKjJkcxAFYOTxR662mYBCAoAN+LgkyZ7NFkZDutcoiVMlAYCoj9LYzUaUysqmHcBu20GANmZg1XshV0mYUTzg6ZiEbwMZMNDcOYow7q8PwuZJFcuvsny2jDA0N5qNmzF+8069zLF/7wO/eUtM4vhmPwG9g9Rv1NBBf94SRLn1rsVfd2Qpojc2AFaYNXrY4Akb9w6mYbflvYK0u+3PGXaRwi7GO8jeBlHo6AJDGpMHRMCIRFIdaL1xvdBqwVrj3Pu/g3kHeIegNTm7pHUxJquzWa1tUKzL1hFfemNNvK/0uA0DdeKJnD/gzJAq0DZBGo7jDUBKAIAlG2r0/qVK1TBgoVCwLSCaeOn6t1dfdnVTF/9mxW13LynAPOwYv26QJCOtwpw2atjgezan3/PvXFwkWCSzjUFgjJ6JuP/Y4UM26A+6YNbDoXte3r9H+yuGA4H9MHta3tkxpgGEQE2mMVhg02QHBNBi7dD7DIAxgAFAtG9ykwBCIsgASbTrgLpmAiYIY6eE8g09wT2RgowEMiBwbLLNfl9kmTi76vMK/A6recifbTy5rGTg5VtSDSy4c/FVgrNbhEvOsB0tnX3K0ME3bA4/592xeLCgUrgnCATAP6PDN8cMH/QSAMDcpf/kuZX/s19MkpPBoy12xkhAs4kAAxgBLf+g9SoYAyCEu1AzUlcf27HtpmvGgAFhAAC3u7Xd401+tDvV4SqO2JIO3ei+oYvnVG+bRO6NjtsLEwEpLHiz/tktS5Q7HhiP/T2DQLINYCAIrrnt7qV9g5k2cuigTVJ+qFh0X15eSP8IfL6j84xBbh6dp6NbiDKl8s+47q0Bz658bnKMcQBYTQGkBcLAhrOsgQ7r7XZMS1oSH8C0d0OtdzcbzYKWlmtuMqSO/nSkmNofaPVIApzborPJZZeffvhvNkqyXDi7qjClsMTEb2BkuXHMq8ygsvFFq7cUUeYvun8scEvL+BEEgKVGsy3O0RM2xe+2DMbG4ta7lnzOZhb4MIzsiAFJEYVxo4cNvpXGNp3lX0uir474YEAY1KFDBjqKlA5w80Gdm+NlQNAuU7SgjQF2K6Haw7j1mgEh3BJVHVf3tFpvapNIBkN4Cfy9spKiB9iYRrlJs5d9xtJt4CJZMkTEjREuvLykqHaLEeWOB07FvgE71SrUJYcQ1gD12J8xrYVtG+oal8uQFqVCaulJxx22UQv8zL39/nReOlVkkytEHwMuAACwwfCCxVljhw9ZPGXO8v0T+4fGJ2Hy3HEFM9RkAgaw7fZSH5r+GbMeWAesMdSixvfJCpIWN2wDyBDAeaA0dneLtKT8IHWz3c1u/J+yYwoUMAJjaHYJGZrVFVFBCdG1hrcV9DqEF+34FObxTGTFlacV1Xchl7oqoyw7CGkRkJuKIYyBc2cU979+U9TtNzqH37n4ZNvl2HkGAZYEkCiEYQF+B5QbH2EjbNyWWE0FYHxf40qV9u8yMT6/vr62NutAj/x0j+6pvL62vwocAT7S0FeAbYGQwAbDUqXDyFHHHblmyrwVZ8YYr7JIERF0HDDVepDckjh2XI/5Qwh6zOYPyH/PNCR/f/2VVav+m7/Ep0sBnoYp+8DUqZ0LKQBgs/+TT6rwH/9Aa1M88lyhqYbRX32Z1X16a9u8+lCgELp1L0jld++eRxLTQDpCCikVJEiS6EhGIdbXZZKG115/teF29jSlRf9nOrxrik8srzpW6FZES856E3PGjJIBd23hMsqJkua1dMfbRsKgaHzW6OFH3whQuWRJiHW6JEZPAqfAAgkwQLsjQATqAENjjmy+f8P4kASoLqJrM4QpoWefzPMrV18UHUttUoC6Wm0VsAGkOsOvnMT5SbZhyRUTBn34Jczed1P/pmnA2+DJC255aHcpXBBSKpbIl5UgZjt68ozxRW9uSaLMX3T/KGC2pDxANoCRtAYx7pRhQ+7uopyxh+B0YJztHQHA2CAAtY83ARDtLnS/DNQizUFh5ilDj3yldE5VQZYw23g4Jmwwjb8t89vib0LX29w2o6T/23wCIACAM+c8GHon6XONpwnlA0Ysl7lwxvii32/pgM1fdP+xSJXY+ZIEYGxBRBp9yrAhC99DIvUOIYxHGuvo/YQDgAFs3CnTtXFEtvmzQrgpm/i2cScOfrulQdBfHHhTtE8FCSxJ2ABu+gmDXkOcs2rdmjtu+O4xn6iPegrM2dcv7VfQI79MIXzdjgJegDD1NXlBRUnRFg/UgkX3DzFUSurRxfqzk0YNG3y5NlKcXvPAA/Sp0wEhpI4xPhB7f5udwPkGMPXNA6z/JlGNwsOp+swTI0cebdphytyakYnjfCKh84eNjJGxg34DGjP9E/oRT50x87ZDem23w82SXjU8mpdO3bd2zTu/u+6coR/Jys/zFt13XPOXU/Nbe3MFkmqB76SzaxaMGDHiQw13qM32SGWC81KkaYi1mdfSeyelI/+jy/unLXhEmWz2+wlMy9U2tAF5wehlpIvWJ+srrxo/6BP7YXIBwBRg6ke+ati82+/9VgjpJUCBjQAAK8iC8aOGHbVFJ4VPmr0klU4VXBfxBGwBuP0Xg4UxS4CS6cUD3uATjjQAlDbvHx0qKn6RDiFdAW4migDbBqLL8uK6LUaUykrzp7oV+9q+JuIBgJp3AGwDegdz3hsNr1fcfMan44Pj6Y9LQFIFBTvZ3k20wNiuR+Hs5/702M9Lt8D3CKdcv1CxsO8BT9XWfN/i2+AUIFlgbADlvp2o26J8xcySopf4FOFjQ5b61XWv9Niu8EngKwJHG6TvjzlxyM83t9/n33h/qnv3wmFZfEHEXxZWIMgGAzTaWG+4zpGysvED1vApxMdq0eT5ixbv6sbv8bCzRMWz76y8trSkZLP5N2n2ss+Czpc03PjzqHWR9cYNYeBZ7FkZJwuuKDnsNT7F0McuRDZTpk5lS6idi2YvGyw0TaFxwpmB1cBrkp4FPSnp8bffic/87OwBka3g/w0A30e6stxvpOAAAAAASUVORK5CYII="><div><h1>mhp live memory</h1><div class="sub" id="sub">memory heap profiler</div></div></div>
+ <div class="sep"></div>
+ <div class="tstats" id="tstats"></div>
+ <div class="spacer"></div>
+ <button id="theme" class="theme" title="switch between the light and dark colour theme (remembered in this browser)">☾ dark</button>
+ <div class="pills"><span id="st" class="pill">connecting…</span><span id="pheap" class="pill hidden"></span><span id="pflt" class="pill hidden"></span></div>
+</header>
+<div class="tabs">
+ <nav><button data-tab="ov" class="on">Overview</button><button data-tab="th">Threads</button><button data-tab="ex">Explore</button><button data-tab="cx">Context</button></nav>
+ <div class="acts">
+  <button id="trc" class="hidden" title="pause / resume allocation sampling inside the target. While paused, nothing new is recorded (frees of earlier samples still are), so the timeline keeps what happened before the pause">⏸ pause tracing</button>
+  <button id="offl" title="download everything mhp keeps (chart history, stacks, time-range timeline, report metadata, source locations) as one HTML file that works offline: select ranges, explore and export reports without mhp. Size grows with -retention / -timeline">save offline copy</button>
+  <button id="pkb" class="hidden">peak copy</button><button id="cgb" class="hidden">cgroup-limit copy</button>
+  <a href="/folded">folded stacks</a>
+ </div>
+</div>
+
+<main>
+<section id="ov">
+ <div class="panel"><div class="ph"><span class="ix">01</span><h2>Readouts</h2><span class="hint">process · tracers</span></div>
+  <div class="pb"><div class="g" id="gauges"></div></div></div>
+ <div class="panel"><div class="ph"><span class="ix">02</span><h2>Memory timeline</h2><span class="hint">drag: select a range (legend: its averages) · click: one tick's values</span></div>
+  <div class="pb">
+   <div class="bar"><span class="lbl">stack by</span>
+    <select id="dim"><option value="regions">region class</option><option value="by_subsys">sub-system</option><option value="by_area">sub-system · area</option><option value="by_thread">thread role</option></select>
+    <select id="win" title="time shown (history is kept for -retention)"><option value="120">last 2 min</option><option value="300">last 5 min</option><option value="600">last 10 min</option><option value="900">last 15 min</option><option value="3600">last hour</option><option value="86400">all kept</option></select>
+    <button id="pause" title="stop scrolling the chart (data keeps being collected)">freeze chart</button>
+   </div>
+   <div id="cvw"><canvas id="cv"></canvas></div><div class="lg" id="lg"></div>
+  </div></div>
+ <div class="rng hidden" id="rng"></div>
+ <div class="cols">
+  <div class="panel"><div class="ph"><span class="ix">03</span><h2>Top growers</h2><span class="hint" id="gw"></span></div><div class="tw"><table id="grow"></table></div></div>
+  <div class="panel"><div class="ph"><span class="ix">04</span><h2>Top live stacks</h2><span class="hint">held now</span></div><div class="tw"><table id="top"></table></div></div>
+  <div id="accw" class="panel hidden"><div class="ph"><span class="ix">05</span><h2>Accounting</h2><span class="hint">who claims what</span></div>
+   <div class="pb"><p class="note" id="accn">Performance Schema is shown for reference only. It misses uninstrumented memory (glibc overhead and fragmentation, many libraries, some engine paths), and its sub-system names differ from mhp's.</p></div><div class="tw"><table id="acc"></table></div></div>
+  <div id="fltw" class="panel hidden"><div class="ph"><span class="ix">06</span><h2>Page-faulting stacks</h2><span class="hint" id="fw"></span></div>
+   <div class="pb"><p class="note">Pages first touched = RSS growth; frees are not visible here.</p></div><div class="tw"><table id="flt"></table></div></div>
+ </div>
+ <div id="arw" class="panel hidden"><div class="ph"><span class="ix">07</span><h2>glibc arenas</h2><span class="hint" id="arh">malloc_info inside the target</span></div>
+  <div class="pb">
+   <div class="bar"><button id="arr" title="ask the target for a new malloc_info now (it answers on its next sampled allocation)">refresh now</button><label><input type="checkbox" id="arall"> all arenas</label>
+    <span class="lgd"><i style="background:var(--acc)"></i>in use</span><span class="lgd"><i style="background:rgba(var(--warmr),.78)"></i>free, kept by glibc</span></div>
+   <div class="armap" id="armap"></div>
+   <p class="note" id="arsum" style="margin-top:6px"></p>
+   <p class="note" id="arnote" style="margin-top:4px"></p>
+  </div>
+  <div class="tw"><table id="art"></table></div></div>
+</section>
+
+<section id="th" class="hidden">
+ <div class="panel"><div class="ph"><span class="ix">01</span><h2>Threads</h2><span class="hint">click a row to explore its stacks</span></div>
+  <div class="pb">
+   <div class="bar">
+    <input id="thq" placeholder="filter name / tid" size="18">
+    <label><input type="checkbox" id="thgrp"> group by role</label>
+    <label><input type="checkbox" id="thdead"> show exited</label>
+   </div>
+   <p class="note">Linux has no per-thread RSS: all threads share one address space, so <code>pidstat -r -t</code> repeats the process RSS on every row.
+   Here <b>live</b> is sampled heap + anonymous-mmap bytes still held that the thread allocated, which needs an allocation tracer. Memory freed by another thread is credited back to the allocating thread.
+   <b>flt/s</b> counts minor page faults, the pages the thread touched first, and needs no tracer.</p>
+  </div>
+  <div class="tw" style="max-height:70vh"><table id="thr"></table></div></div>
+</section>
+
+<section id="ex" class="hidden">
+ <div class="panel"><div class="ph"><span class="ix">01</span><h2>Explore stacks</h2><span class="hint">flame · callers · call tree</span></div>
+  <div class="pb">
+   <div class="bar">
+    <select id="xm"><option value="live" class="heap">live bytes</option><option value="growth" class="heap">growth (window)</option><option value="alloc" class="heap">allocated total</option><option value="faults_window" class="flt">page faults (window)</option><option value="faults" class="flt">page faults (total)</option>
+     <option value="range_alloc" class="rg heap">range: allocated</option><option value="range_free" class="rg heap">range: freed</option><option value="range_net" class="rg heap">range: net (allocated − freed)</option><option value="range_faults" class="rg flt">range: page faults</option></select>
+    <span id="xrng" class="chip hidden"></span>
+    <select id="xv"><option value="flame">flame (top-down)</option><option value="callers">callers (bottom-up)</option><option value="tree">call tree</option></select>
+    <select id="xrole"><option value="">all roles</option></select>
+    <select id="xsub"><option value="">all sub-systems</option></select>
+    <span class="clr"><input id="xtid" placeholder="tid" size="7"><button data-clr="xtid" title="clear tid">×</button></span>
+    <span class="clr"><input id="xq" placeholder="search / highlight" size="16"><button data-clr="xq" title="clear search">×</button></span>
+    <label title="hide malloc/new/my_malloc/ut::*alloc frames"><input type="checkbox" id="xw" checked> hide alloc wrappers</label>
+    <span id="treebtn" class="hidden"><button id="xexp" title="expand every listed row (up to 3000)">expand all</button> <button id="xcol">collapse all</button></span>
+   </div>
+   <div class="bar">
+    <button id="xr">refresh</button><button id="xsvg" title="download the current view as a standalone, zoomable flame graph SVG">export SVG</button><button id="xfold" title="download folded stacks (flamegraph.pl, speedscope)">export folded</button><button id="xpp" title="download a pprof profile (go tool pprof, pprof.me, Pyroscope): all frames, with source file and line where known">export pprof</button><button id="xrep" class="hidden" title="download a self-contained HTML report of the selected time range, with the thread / role / area filters applied">export HTML report</button><label><input type="checkbox" id="xa" checked> auto refresh</label>
+   </div>
+   <div class="crumbs" id="crumbs"></div>
+   <div class="src" id="src">hover a frame for its source location · click to pin it</div>
+   <canvas id="fl"></canvas>
+   <div class="tw tree hidden" id="treew"><table id="tree"></table></div>
+   <p class="note" id="xnote"></p>
+  </div></div>
+</section>
+<section id="cx" class="hidden">
+ <div class="panel"><div class="ph"><span class="ix">01</span><h2>Context</h2><span class="hint">what was traced, and how</span></div>
+  <div class="pb"><p class="note">The same context as the HTML report's. Check the server command line before sharing exports.</p></div>
+  <div class="tw"><table id="ctx"></table></div></div>
+</section>
+</main>
+<footer><span>mhp · <b>memory heap profiler</b></span><span id="clock"></span><span class="spacer"></span><span>a <b>DBrains</b> tool</span></footer>
+<div id="tip"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+let pal=[];function readPal(){const c=getComputedStyle(document.documentElement);pal=[1,2,3,4,5,6,7,8,9].map(i=>c.getPropertyValue('--s'+i).trim())}readPal(); // console palette; amber is kept for the traced peak and highlights
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const B=n=>{n=+n||0;const s=n<0?'-':'';n=Math.abs(n);const u=['B','KiB','MiB','GiB','TiB'];let i=0;while(n>=1024&&i<4){n/=1024;i++}return s+n.toFixed(i?1:0)+' '+u[i]};
+const D=n=>`<span class="${n>0?'pos':n<0?'neg':''}">${n>0?'+':''}${B(n)}</span>`;
+const store={get:(k,d)=>{try{return localStorage.getItem(k)??d}catch(_){return d}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
+let hist=[],paused=false,tab=store.get('tab','ov'),dim=store.get('dim','by_subsys'),info={};
+let win=+store.get('win','300'),sel=null,drag=null,chart=null; // sel/drag: {from,to} unix ms; chart: last drawn geometry
+// the frozen chart and the selected range survive a reload (restored once the history is loaded)
+let frozenAt=+store.get('frozen','')||0;paused=frozenAt>0;
+const T=t=>new Date(t).toLocaleTimeString();
+
+// ---------- tabs ----------
+function showTab(t){tab=t;store.set('tab',t);document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+ ['ov','th','ex','cx'].forEach(id=>$(id).classList.toggle('hidden',id!==t));render();if(t==='ex')loadStacks();if(t==='cx')context()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+// ---------- overview ----------
+$('dim').value=dim;$('dim').onchange=e=>{dim=e.target.value;store.set('dim',dim);draw()};
+function pauseLabel(){$('pause').classList.toggle('on',paused);$('pause').textContent=paused?'unfreeze chart':'freeze chart'}
+$('pause').onclick=()=>{paused=!paused;frozenAt=paused?(hist.length?hist[hist.length-1].t:Date.now()):0;store.set('frozen',frozenAt||'');pauseLabel();if(!paused)render();else draw()};
+// widen the window so a restored selection is visible
+function fitWin(){if(!sel||!hist.length)return;const end=paused?frozenAt:hist[hist.length-1].t,need=(end-sel.from)/1000+10;if(need<=win)return;
+ const o=[...$('win').options].find(o=>!o.disabled&&+o.value>=need);win=o?+o.value:86400;$('win').value=win}
+$('win').value=win;$('win').onchange=e=>{win=+e.target.value;store.set('win',win);draw()};
+function gauges(v){
+ const p=v.proc||{},lim=p.cgroup_limit;
+ const pct=lim?100*p.rss/lim:0;
+ const items=[['RSS',B(p.rss),lim?pct.toFixed(0)+'% of cgroup limit '+B(lim):'no cgroup limit',lim?pct:null],
+ ['anon / file',B(p.anon)+' / '+B(p.file),'THP '+(p.thp<0?'n/a':B(p.thp))+' · swap '+B(p.swap)],
+ ['traced live',v.has_trace?B(v.traced):'n/a',v.has_trace?`anon RSS − traced: ${B(v.gap)} (negative = allocated, not yet resident)`:'no allocation tracer (/proc only)'],
+ ['alloc / free rate',v.has_trace?B(v.alloc_rate)+'/s':'n/a',v.has_trace?'free '+B(v.free_rate)+'/s':''],
+ ['page faults',v.has_faults?B(v.fault_rate)+'/s faulted in':(p.minflt||0).toLocaleString(),(v.has_faults?'total minor '+(p.minflt||0).toLocaleString()+' · ':'')+'major '+(p.majflt||0).toLocaleString()+' · threads '+(p.threads||0)]];
+ for(const tr of v.tracers||[])items.push([tr.name,(tr.sampled||0).toLocaleString()+' samples',
+  (tr.name.startsWith('bpf page')?`in-kernel counts · ${tr.live_ptrs} stack×thread keys · stacks not stored ${tr.table_drops}`:tr.name.startsWith('perf')?`every ${tr.sample_bytes} fault(s)`:`1 per ${B(tr.sample_bytes)} · untracked ${tr.table_drops} · backlog ${tr.backlog}`)+` · lost ${tr.drops}`]);
+ $('gauges').innerHTML=items.map(i=>`<div class="c"><span>${esc(i[0])}</span><b>${i[1]}</b>`+
+  (i[3]!=null?`<div class="meter"><i class="${i[3]>90?'bad':i[3]>75?'warn':''}" style="width:${Math.min(100,i[3]).toFixed(1)}%"></i></div>`:'')+`<span>${i[2]}</span></div>`).join('');
+}
+// masthead: key readouts on every tab, and the status pills
+function masthead(v){
+ const p=v.proc||{},lim=p.cgroup_limit,ts=(l,val,cls)=>`<div class="ts ${cls||''}"><b>${val}</b><span>${l}</span></div>`;
+ if(info.imported){$('tstats').innerHTML=ts('in use (profile)',B(v.traced));$('clock').innerHTML=`profile written <b>${T(v.t)}</b>`;return}
+ $('tstats').innerHTML=ts('RSS',B(p.rss),lim&&p.rss>.9*lim?'bad':lim&&p.rss>.75*lim?'warn':'')+ts('anon',B(p.anon))+
+  (v.has_trace?ts('traced live',B(v.traced))+ts('alloc / s',B(v.alloc_rate)):'')+
+  (v.has_faults?ts('faulted / s',B(v.fault_rate)):'')+(p.swap>0?ts('swap',B(p.swap),'warn'):'')+ts('threads',(p.threads||0).toLocaleString());
+ $('clock').innerHTML=`last view <b>${T(v.t)}</b>`;
+}
+function pills(){
+ const h=$('pheap'),f=$('pflt'),src=(info.heap_src||'').replace(/\s*\(.*$/,'').replace(/ on .*/,'');
+ h.className=(info.heap?'':'hidden ')+'pill '+(tracerOn?'ok':'warnp');
+ h.innerHTML=`<i></i>heap · ${esc(tracerOn?src:'paused')}`;h.title=info.heap_src||'';
+ f.className=(info.faults?'':'hidden ')+'pill ok';f.innerHTML='<i></i>faults · '+esc((info.fault_scope||'').split(',')[0]);f.title='page-fault stacks: '+(info.fault_scope||'');
+ const sub=[info.cmd,info.pid?'pid '+info.pid:'',info.since?'since '+info.since.slice(11):''].filter(Boolean).join(' · ');
+ if(sub)$('sub').textContent=sub}
+function stackRows(el,list,key){
+ const F=key==='f',L=(list||[]).filter(r=>key!=='t'?r.growth>0:r.live>0);
+ el.innerHTML=`<tr><th>stack (leaf first)</th><th>sub-system</th><th>${F?'faulted total':'live'}</th><th>${F?'faulted Δ':'Δ'}</th></tr>`+(L.length?'':'<tr><td colspan=4 class="note">nothing yet</td></tr>')+L.map((r,i)=>{
+  const st=r.stack.slice().reverse().filter(f=>!WR.test(f)).slice(0,6);
+  return `<tr class="click" data-f="${esc(st[0]||'')}"><td class="f">${esc(st.join(' ← '))}</td><td>${esc(r.area||r.subsystem)}</td><td class="n">${B(r.live)}</td><td class="n">${F?B(r.growth):D(r.growth)}</td></tr>`}).join('');
+ el.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>{$('xq').value=tr.dataset.f;$('xv').value='callers';$('xm').value=F?'faults_window':(info.heap?'live':'faults_window');focus=[];showTab('ex')});
+}
+// the allocator's own statistics, taken inside the target by libmhp (glibc, jemalloc or tcmalloc)
+function heapRows(h){
+ if(!h)return '';
+ const ms=`took ${(h.cost_ns/1e6).toFixed(2)} ms in the target`,pct=(a,b)=>b?(100*a/b).toFixed(1)+' %':'',
+  row=(a,av,b,bv)=>`<tr><td>${a}</td><td class="n">${av}</td><td>${b}</td><td class="n">${bv}</td></tr>`;
+ if(h.allocator==='jemalloc')return `<tr><th colspan=4>jemalloc (mallctl stats, all arenas; ${ms})</th></tr>`+
+  row('allocated (in use)',B(h.in_use),'active pages (holding live allocations)',B(h.active))+
+  row('<b>free, held by jemalloc</b>',`<b>${B(h.free)}</b>`,'of it inside active pages / dirty pages',`${B(Math.max(0,h.active-h.in_use))} / ${B(Math.max(0,h.resident-h.active-h.metadata))}`)+
+  row('metadata',B(h.metadata),'resident',B(h.resident))+
+  row('mapped',B(h.mapped),'retained (returned to the OS, address space kept)',B(h.retained))+
+  row('fragmentation (free / resident)',pct(h.free,h.resident),'','');
+ if(h.allocator==='tcmalloc')return `<tr><th colspan=4>tcmalloc (MallocExtension properties; ${ms})</th></tr>`+
+  row('allocated (in use)',B(h.in_use),'heap size (from the OS)',B(h.heap_size))+
+  row('<b>free, held by tcmalloc</b>',`<b>${B(h.free)}</b>`,'page heap free (still mapped)',B(h.pageheap_free))+
+  row('thread caches',B(h.thread_free),'central + transfer caches',B((h.central_free||0)+(h.transfer_free||0)))+
+  row('page heap unmapped (returned to the OS)',B(h.unmapped),'fragmentation (free / (in use + free))',pct(h.free,h.in_use+h.free));
+ return `<tr><th colspan=4>glibc malloc (mallinfo2, all arenas; ${ms})</th></tr>`+
+  row('in use (arenas)',B(h.in_use),'mmapped large chunks',`${B(h.mmapped)} <span style="color:var(--mut)">(${h.mmap_chunks||0})</span>`)+
+  row('<b>free, retained by glibc</b>',`<b>${B(h.free)}</b> <span style="color:var(--mut)">${(h.free_chunks||0).toLocaleString()} chunks</span>`,'releasable top (malloc_trim)',B(h.releasable))+
+  row('arena size',B(h.arena),'fragmentation (free / arena)',pct(h.free,h.arena));
+}
+// sub-areas of the engines, by sub-system: {"InnoDB":[["InnoDB · buffer pool",n,"buffer pool"],…]} (largest first)
+function subAreas(m){const k={};for(const [a,n] of Object.entries(m||{})){const i=a.indexOf(' · ');if(i<0)continue;if(n>0)(k[a.slice(0,i)]=k[a.slice(0,i)]||[]).push([a,n,a.slice(i+3)])}
+ for(const l of Object.values(k))l.sort((a,b)=>b[1]-a[1]);return k}
+function accounting(v){
+ const pf=v.pfs,p=v.proc||{};$('accw').classList.toggle('hidden',!pf&&!v.has_trace&&!v.heap);if(!pf&&!v.has_trace&&!v.heap)return;
+ const md=pf&&pf.source==='mariadb',sn=md?'MariaDB Memory_used':'Performance Schema',tn=md?'Memory_used':'PFS total';
+ $('accn').innerHTML=md?'MariaDB runs without Performance Schema here, so this side shows its own counters: the <code>Memory_used</code> status variable and each connection\'s <code>MEMORY_USED</code> (information_schema.PROCESSLIST). They count what MariaDB allocates through its own wrappers, resident or not, and miss glibc overhead, fragmentation and other libraries. Shown for reference only.':
+  'Performance Schema is shown for reference only. It misses uninstrumented memory (glibc overhead and fragmentation, many libraries, some engine paths), and its sub-system names differ from mhp\'s.'+(pf&&pf.memory_used?' MariaDB\'s <code>Memory_used</code> status variable: <b>'+B(pf.memory_used)+'</b>.':'');
+ const ours=[],kids=subAreas(v.by_area);Object.entries(v.by_subsys||{}).sort((a,b)=>b[1]-a[1]).forEach(e=>{ours.push(e);(kids[e[0]]||[]).forEach(k=>ours.push(k))});const theirs=Object.entries((pf||{}).by_area||{}).sort((a,b)=>b[1]-a[1]);
+ const n=Math.max(ours.length,theirs.length),rows=[];
+ for(let i=0;i<n;i++){const o=ours[i]||['',null],t=theirs[i]||['',null];rows.push(`<tr><td${o[2]?' class="sub"':''}>${esc(o[2]||o[0])}</td><td class="n">${o[1]==null?'':B(o[1])}</td><td>${esc(t[0])}</td><td class="n">${t[1]==null?'':B(t[1])}</td></tr>`)}
+ $('acc').innerHTML=`<tr><th colspan=2>mhp (traced ${info.cmd==='run'||info.from_start?'from process start':'since attach '+esc((info.since||'').slice(11))}, by sub-system)</th><th colspan=2>${sn} (${md?'':'by area, '}since server start)</th></tr>
+  <tr><td><b>RSS</b> / anon</td><td class="n"><b>${B(p.rss)}</b> / ${B(p.anon)}</td><td><b>${tn}</b></td><td class="n"><b>${pf?B(pf.total):'n/a'}</b></td></tr>
+  <tr><td>traced live</td><td class="n">${v.has_trace?B(v.traced):'n/a'}</td><td>anon RSS not claimed by ${md?'Memory_used':'PFS'}</td><td class="n">${pf?B(p.anon-pf.total):''}</td></tr>`+
+  heapRows(v.heap)+
+  `<tr><th colspan=4>sub-systems</th></tr>`+rows.join('');
+}
+// glibc per-arena detail (malloc_info, taken by libmhp inside the target): the latest one received
+let arLatest=null,arSel=null,arPick=null,arSort=store.get('arSort','bf'),arDir=+store.get('arDir','-1')||-1;
+// with a time range selected: the reading at or before its end (readings come every 30 s or so)
+function loadArenasSel(){if(!sel){arSel=null;arenaPanel();return}const to=sel.to;
+ fetch('/arenas?t='+to).then(r=>r.json()).then(a=>{if(sel&&sel.to===to){arSel={to,a};arenaPanel()}}).catch(()=>{})}
+// the smaps read (arenas' resident size) nearest the reading's time, from the kept views
+function arenaRes(t){let best=null;for(const v of hist){const p=v.proc||{};if(!p.arena_t||v.t>t+10e3)continue;if(!best||Math.abs(p.arena_t-t)<Math.abs(best.arena_t-t))best=p}return best||{}}
+function arenaPanel(){
+ const w=$('arw'),pick=sel&&arSel&&arSel.to===sel.to,arenas=pick?arSel.a:arLatest;
+ w.classList.toggle('hidden',!arLatest&&!pick);if(!arLatest&&!pick)return;
+ if(!arenas){$('arh').textContent='no reading at or before the selected time';['armap','arsum','arnote','art'].forEach(id=>$(id).innerHTML='');return}
+ const A=arenas.arenas||[],tot=A.reduce((s,a)=>s+a.size,0)||1,pct=(a,b)=>b?(100*a/b).toFixed(1)+' %':'',
+  large=A.reduce((s,a)=>s+a.free_large,0),top=A.reduce((s,a)=>s+(a.top||0),0),binned=arenas.free-top,name=a=>a.n?'#'+a.n:'#0 main';
+ $('armap').innerHTML=A.map(a=>`<i data-n="${a.n}" class="${a.n===arPick?'pick':''}" style="flex-grow:${a.size/tot};--u:${a.size?(100*(a.size-a.free)/a.size).toFixed(1):0}%" title="arena ${name(a)}: ${B(a.size)}, in use ${B(a.size-a.free)}, free ${B(a.free)} (${pct(a.free,a.size)}): click to find it in the table"></i>`).join('');
+ $('arh').textContent=`taken ${T(arenas.t)} · ${arenas.cost_ns<1e6?Math.round(arenas.cost_ns/1e3)+' µs':(arenas.cost_ns/1e6).toFixed(1)+' ms'} in the target${pick?` · the reading at or before the end of the selected range (${T(sel.to)})`:sel?' · loading the reading for the selected range…':' · latest reading (select a time on the chart to see an earlier one)'}`;
+ $('arsum').innerHTML=`<b>${A.length}</b> arenas${arenas.truncated?' (list cut: more than fit the ring)':''} · size <b>${B(arenas.size)}</b> (high-water ${B(arenas.max_size)}) · in use <b>${B(arenas.size-arenas.free)}</b> · free <b>${B(arenas.free)}</b> (${pct(arenas.free,arenas.size)}): ${B(binned)} in free chunks, ${B(large)} of them ≥ 128 KiB, and ${B(top)} at the arenas' tops · outside the arenas: ${B(arenas.mmapped)} in ${(arenas.mmap_chunks||0).toLocaleString()} mmapped chunks`;
+ // residency (smaps): glibc's arena mappings ([heap] and the 64 MiB-aligned heaps), read near this malloc_info
+ const lp=arenaRes(arenas.t),inuse=arenas.size-arenas.free,rgap=lp.arena_t?arenas.t-lp.arena_t:0,
+  rok=lp.arena_mapped>0&&Math.abs(lp.arena_mapped-arenas.size)<=Math.max(.1*arenas.size,128*2**20),
+  rfree=rok?Math.max(0,Math.min(arenas.free,lp.arena_rss-inuse)):null,gone=rok?arenas.free-rfree:0,
+  ago=ms=>{const s=Math.abs(ms)/1e3;return s<90?Math.round(s)+' s':Math.round(s/60)+' min'};
+ if(rok)$('arsum').innerHTML+=` · resident (smaps, read ${T(lp.arena_t)}${Math.abs(rgap)>15e3?`, ${ago(rgap)} ${rgap>0?'before':'after'} this reading`:''}): <b>${B(lp.arena_rss)}</b> of the arenas, so about <b>${B(rfree)}</b> of the free memory is in RSS and ${B(gone)} is not (released or never touched)`;
+ else if(lp.arena_mapped>0)$('arsum').innerHTML+=` · smaps found ${B(lp.arena_mapped)} of arena mappings, which does not match malloc_info's size: residency not shown`;
+ const worst=A.slice().sort((a,b)=>(b.free-(b.top||0))-(a.free-(a.top||0)))[0],wb=worst?worst.free-(worst.top||0):0;
+ const tops=`The top chunk is the free space at an arena's end: glibc returns it by itself once it exceeds the trim threshold (128 KiB, or twice the dynamic mmap threshold, up to 64 MiB). `;
+ // with residency known, judge by the free memory still in RSS: after a malloc_trim the chunks stay free but leave RSS
+ const kept=rok?Math.min(binned,rfree):binned,keptL=rok?Math.min(large,rfree):large;
+ $('arnote').innerHTML=rok&&binned>64*2**20&&binned>.2*arenas.size&&!(kept>64*2**20&&kept>.2*arenas.size)?
+  `glibc's arenas hold <b>${B(binned)}</b> in free chunks, but only about <b>${B(rfree)}</b> of the arenas' free memory is resident (smaps): the rest was released (by <code>malloc_trim</code>, or never touched) and costs no RAM. Nothing much for <code>malloc_trim</code> to release now. `+tops:
+  kept>64*2**20&&kept>.2*arenas.size?
+  `glibc keeps <b>${B(binned)}</b> in free chunks inside its arenas${wb>.3*binned?`, ${pct(wb,binned)} of it in arena ${name(worst)} alone`:''}${rok?`, and about <b>${B(rfree)}</b> of the arenas' free memory is resident (smaps)`:''}. It returns memory to the OS only from the top of an arena, so free chunks below a live one stay in RSS. `+
+  `<b>${B(large)}</b> is in chunks of 128 KiB or more, whose whole pages <code>malloc_trim(0)</code> would release${rok&&keptL<large?` (up to ${B(keptL)} of RSS: the rest is not resident)`:''}. Other remedies: fewer arenas (<code>GLIBC_TUNABLES=glibc.malloc.arena_max=N</code>; the default allows 8 per CPU), or jemalloc / tcmalloc. `+tops+`Free pages never touched, or already released by <code>malloc_trim</code>, count as free here but are not in RSS.`:
+  'Free chunks are what glibc keeps for reuse; it returns memory to the OS only from the top of an arena. '+tops+'Free pages never touched, or released by <code>malloc_trim</code>, count here but are not in RSS.';
+ const bf=a=>a.free-(a.top||0),cols=[['n','arena',a=>a.n],['size','size',a=>a.size],['use','in use',a=>a.size-a.free],['free','free',a=>a.free],['pct','free %',a=>a.size?a.free/a.size:0],
+  ['top','top chunk',a=>a.top||0],['large','free ≥ 128 KiB',a=>a.free_large],['mid','free 1–128 KiB',a=>a.free_mid],['small','free &lt; 1 KiB',a=>a.free_small],['largest','largest free chunk',a=>a.largest||0],
+  ['chunks','free chunks',a=>a.free_chunks||0],['max','high-water',a=>a.max_size]],
+  key=(cols.find(c=>c[0]===arSort)||[0,0,bf])[2],rows=A.slice().sort((a,b)=>(key(a)-key(b))*arDir||bf(b)-bf(a)||a.n-b.n);
+ let shown=$('arall').checked?rows:rows.slice(0,12);const pa=arPick==null?null:rows.find(a=>a.n===arPick);if(pa&&!shown.includes(pa))shown=shown.concat([pa]);
+ $('art').innerHTML='<tr>'+cols.map(c=>`<th class="s" data-k="${c[0]}" title="sort by ${c[1]}${arSort==='bf'?' (now: by free memory in chunks, top chunk excluded)':''}">${c[1]}${arSort===c[0]?(arDir<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>'+
+  shown.map(a=>`<tr data-n="${a.n}" class="${a.n===arPick?'pick':''}"><td>${name(a)}${a.subheaps?` <span style="color:var(--mut)">${a.subheaps} sub-heap${a.subheaps>1?'s':''}</span>`:''}</td><td class="n">${B(a.size)}</td><td class="n">${B(a.size-a.free)}</td><td class="n"><b>${B(a.free)}</b></td>`+
+  `<td class="n">${pct(a.free,a.size)}<div class="meter"><i class="${bf(a)>.75*a.size?'bad':bf(a)>.4*a.size?'warn':''}" style="width:${a.size?(100*a.free/a.size).toFixed(1):0}%"></i></div></td>`+
+  `<td class="n">${B(a.top||0)}</td><td class="n">${B(a.free_large)}</td><td class="n">${B(a.free_mid)}</td><td class="n">${B(a.free_small)}</td><td class="n">${a.largest?'≤ '+B(a.largest):'–'}</td><td class="n">${(a.free_chunks||0).toLocaleString()}</td><td class="n">${B(a.max_size)}</td></tr>`).join('')+
+  (shown.length<rows.length?`<tr><td colspan=12 class="note">${rows.length-shown.length} more arenas (tick "all arenas")</td></tr>`:'');
+ $('art').querySelectorAll('th.s').forEach(th=>th.onclick=()=>{const k=th.dataset.k;arDir=arSort===k?-arDir:-1;arSort=k;store.set('arSort',k);store.set('arDir',String(arDir));arenaPanel()});
+}
+// click an arena's bar: highlight its row (and the bar), scrolled into view; click again to clear
+function pickArena(n,scroll){arPick=arPick===n?null:n;arenaPanel();if(scroll&&arPick!=null){const r=$('art').querySelector('tr.pick');if(r)r.scrollIntoView({block:'nearest',behavior:'smooth'})}}
+$('armap').onclick=e=>{const n=e.target.dataset&&e.target.dataset.n;if(n!=null)pickArena(+n,true)};
+$('art').onclick=e=>{const r=e.target.closest('tr[data-n]');if(r)pickArena(+r.dataset.n,false)};
+$('arall').onchange=arenaPanel;
+$('arr').onclick=()=>fetch('/arenas',{method:'POST'});
+// offline copies mhp took by itself (-peak): download buttons, and marks on the chart (also "this copy" offline)
+let marks=[];
+function loadPeaks(){fetch('/peaks').then(r=>r.json()).then(l=>{l=l||[];
+ const m=l.map(c=>({t:c.t,label:c.kind==='cgroup'?'cgroup-limit copy':'peak copy'}));if(info.capture)m.push({t:info.capture.t,label:'this copy ('+info.capture.kind+')'});
+ const changed=JSON.stringify(m)!==JSON.stringify(marks);marks=m;
+ for(const [id,kind] of [['pkb','peak'],['cgb','cgroup']]){const c=l.find(c=>c.kind===kind),b=$(id);b.classList.toggle('hidden',!c);if(!c)continue;
+  b.title=`download the offline copy mhp took at ${new Date(c.t).toLocaleString()}: ${c.reason} (${(c.bytes/1e6).toFixed(1)} MB${c.file?'; also in '+c.file:''})`;b.textContent=(kind==='peak'?'peak copy ':'cgroup-limit copy ')+T(c.t)}
+ if(changed&&tab==='ov')draw()}).catch(()=>{})}
+$('pkb').onclick=()=>download('/peak.html?kind=peak');$('cgb').onclick=()=>download('/peak.html?kind=cgroup');
+setInterval(()=>{if(!window.mhpOffline)loadPeaks()},10000);
+function draw(){
+ const cv=$('cv');if(tab!=='ov')return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;
+ const x=cv.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,W,H);chart=null;
+ const end=paused&&frozenAt?frozenAt:hist.length?hist[hist.length-1].t:0;
+ const pts=hist.filter(v=>v.t>=end-win*1000&&v.t<=end&&v[dim]&&Object.keys(v[dim]).length);if(pts.length<2){$('lg').textContent=dim==='regions'?(info.smaps==='off'?'the region view is off (mhp was started with -smaps 0)':'waiting for data…'):'no data for this dimension yet (needs the allocation tracer)';return}
+ const last=pts[pts.length-1][dim];
+ let keys=Object.keys(last).sort((a,b)=>last[b]-last[a]);const top=keys.slice(0,8),rest=keys.slice(8);
+ const series=top.concat(rest.length?['other']:[]),hid=hidden(),on=k=>!hid.has(k);
+ const val=(v,k)=>k==='other'?rest.reduce((s,r)=>s+(v[dim][r]||0),0):(v[dim][k]||0);
+ let mx=0;const stacks=pts.map(v=>{let c=0;return series.map(k=>on(k)?c+=Math.max(0,val(v,k)):c)});stacks.forEach(s=>mx=Math.max(mx,s[s.length-1]));
+ const rss=dim!=='regions'&&on('#rss')?pts.map(v=>(v.proc||{}).rss||0):null;if(rss)rss.forEach(r=>mx=Math.max(mx,r));
+ const hasPeak=dim!=='regions'&&pts.some(v=>v.traced_peak),peak=hasPeak&&on('#peak')?pts.map(v=>v.traced_peak||v.traced||0):null;if(peak)peak.forEach(p=>mx=Math.max(mx,p));
+ const hasSwap=pts.some(v=>(v.proc||{}).swap>0),swap=hasSwap&&on('#swap')?pts.map(v=>(v.proc||{}).swap||0):null;if(swap)swap.forEach(p=>mx=Math.max(mx,p));mx=mx*1.1||1;
+ // traced series are left out while tracing was paused (only frees arrive then); /proc-based ones continue
+ const gap=i=>dim!=='regions'&&pts[i].paused,segs=[];for(let i=0,a=-1;i<=pts.length;i++){if(i<pts.length&&!gap(i)){if(a<0)a=i}else if(a>=0){segs.push([a,i-1]);a=-1}}
+ const hasPause=pts.some(v=>v.paused);
+ const L=70,Bt=18,w=W-L-6,h=H-Bt-6,T0=pts[0].t,T1=pts[pts.length-1].t,X=t=>L+w*(t-T0)/Math.max(1,T1-T0),Y=n=>6+h*(1-n/mx);
+ const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim(),fg=css('--fg'),mut=css('--mut'),hi=css('--hi'),acc=css('--acc'),mono=css('--mono');
+ x.font='10px '+mono;x.fillStyle=mut;x.strokeStyle='rgba('+css('--liner')+',.08)';
+ for(let g=0;g<=4;g++){const n=mx*g/4,y=Math.round(Y(n))+.5;x.beginPath();x.moveTo(L,y);x.lineTo(W-6,y);x.stroke();x.fillText(B(n),4,y+3)}
+ if(hasPause){x.fillStyle='rgba('+css('--warmr')+',.07)';pts.forEach((v,i)=>{if(!v.paused)return;const a0=X(i?pts[i-1].t:v.t),b0=X(v.t);x.fillRect(a0,6,Math.max(1,b0-a0),h)})}
+ // stacked bands: translucent fill between the series below and this one, with a glowing top edge
+ const line=(a,b,f)=>{for(let i=a;i<=b;i++){const X0=X(pts[i].t),Y0=Y(f(i));i===a?x.moveTo(X0,Y0):x.lineTo(X0,Y0)}};
+ for(let s=0;s<series.length;s++){if(!on(series[s]))continue;const col=pal[s%pal.length],lo=i=>s?stacks[i][s-1]:0;
+  for(const [a,b] of segs){x.beginPath();line(a,b,i=>stacks[i][s]);for(let i=b;i>=a;i--)x.lineTo(X(pts[i].t),Y(lo(i)));x.closePath();
+   x.fillStyle=col;x.globalAlpha=.3;x.fill();x.globalAlpha=1;
+   x.beginPath();line(a,b,i=>stacks[i][s]);x.strokeStyle=col;x.lineWidth=1.3;x.stroke();x.lineWidth=1}}
+ if(rss){x.setLineDash([4,3]);x.strokeStyle=fg;x.globalAlpha=.8;x.beginPath();rss.forEach((r,i)=>i?x.lineTo(X(pts[i].t),Y(r)):x.moveTo(X(pts[i].t),Y(r)));x.stroke();x.setLineDash([]);x.globalAlpha=1}
+ if(peak){x.strokeStyle=hi;x.lineWidth=1.5;x.beginPath();for(const [a,b] of segs)line(a,b,i=>peak[i]);x.stroke();x.lineWidth=1}
+ if(swap){x.setLineDash([1,3]);x.strokeStyle=css('--bad');x.lineWidth=1.5;x.beginPath();swap.forEach((r,i)=>i?x.lineTo(X(pts[i].t),Y(r)):x.moveTo(X(pts[i].t),Y(r)));x.stroke();x.setLineDash([]);x.lineWidth=1}
+ for(const [r,a] of [[sel,.13],[drag,.09]]){if(!r)continue;const a0=Math.max(L,X(r.from));let b0=Math.min(L+w,X(r.to));if(b0<=a0){if(r.from<T0&&r.to>=T0)b0=a0+3;else continue}
+  x.fillStyle=acc;x.globalAlpha=a;x.fillRect(a0,6,b0-a0,h);x.globalAlpha=1;x.strokeStyle=acc;x.shadowColor=acc;x.shadowBlur=6;x.strokeRect(a0+.5,6.5,b0-a0-1,h-1);x.shadowBlur=0}
+ for(const m of marks){if(m.t<T0||m.t>T1)continue;const mx0=Math.round(X(m.t))+.5;x.strokeStyle=hi;x.globalAlpha=.85;x.setLineDash([2,3]);x.beginPath();x.moveTo(mx0,6);x.lineTo(mx0,6+h);x.stroke();x.setLineDash([]);
+  const lb='▼ '+m.label,rt=mx0+3+x.measureText(lb).width>L+w;x.fillStyle=hi;x.textAlign=rt?'right':'left';x.fillText(lb,mx0+(rt?-3:3),15);x.textAlign='left';x.globalAlpha=1}
+ x.fillStyle=mut;x.fillText(T(T0),L,H-4);x.textAlign='right';x.fillText(T(T1),W-6,H-4);x.textAlign='left';
+ chart={L,w,T0,T1,pts};
+ // legend values: at the clicked tick, averaged over a selected range (peak: its highest), else the latest
+ let at=sel?hist.filter(v=>v.t>sel.from&&v.t<=sel.to&&v[dim]&&Object.keys(v[dim]).length):[];
+ if(dim!=='regions'&&at.some(v=>!v.paused))at=at.filter(v=>!v.paused);
+ const when=at.length>1?`average of ${at.length} ticks ${T(at[0].t)} → ${T(at[at.length-1].t)}`:at.length?`at ${T(at[0].t)}`:paused?`at ${T(pts[pts.length-1].t)}`:'latest';
+ if(!at.length)at=[pts[pts.length-1]];
+ const avg=f=>at.reduce((s,v)=>s+f(v),0)/at.length,pr=v=>v.proc||{};
+ const it=(k,body,title)=>`<span data-k="${esc(k)}" class="${on(k)?'':'off'}" title="${title?title+'. ':''}click: show/hide; shift-click: show only this (again: show all)">${body}</span>`;
+ $('lg').innerHTML=`<span class="when" title="click a tick on the chart for its values, drag across it for averages over a range">${when}:</span>`+
+  series.map((k,i)=>it(k,`<i style="background:${pal[i%pal.length]}"></i>${esc(k)} ${B(avg(v=>val(v,k)))}`)).join('')+
+  (dim!=='regions'?it('#rss',`<span style="color:var(--fg)">- - -</span> RSS ${B(avg(v=>pr(v).rss||0))}`):'')+
+  (hasPeak?it('#peak',`<i style="background:${hi};height:2px;box-shadow:0 0 6px ${hi}"></i>traced peak ${B(Math.max(...at.map(v=>v.traced_peak||v.traced||0)))}`,'highest traced live bytes within each tick, in event order: shows spikes allocated and freed between two ticks; over a range, the highest of them'):'')+
+  (hasSwap?it('#swap',`<span style="color:var(--bad)">····</span> swap ${B(avg(v=>pr(v).swap||0))}`,'swapped-out bytes of the process (VmSwap)'):'')+
+  (hasPause?`<span title="allocation tracing was paused from the toolbar: traced series are left out there; RSS and regions continue"><i style="background:rgba(var(--warmr),.3)"></i>tracing paused</span>`:'');
+ lgKeys=[...series,...(dim!=='regions'?['#rss']:[]),...(hasPeak?['#peak']:[]),...(hasSwap?['#swap']:[])];
+}
+// legend: click hides/shows an item, shift-click shows only it. On mousedown: the legend is redrawn every tick,
+// which would swallow a click whose mousedown and mouseup land on different copies.
+let lgKeys=[];
+$('lg').onmousedown=e=>{const el=e.target.closest('span[data-k]');if(!el||e.button)return;e.preventDefault();const k=el.dataset.k,h=hidden();
+ if(e.shiftKey){const solo=lgKeys.every(o=>o===k?!h.has(o):h.has(o));h.clear();if(!solo)lgKeys.forEach(o=>{if(o!==k)h.add(o)})}
+ else if(h.has(k))h.delete(k);else h.add(k);
+ store.set('hide.'+dim,JSON.stringify([...h]));draw()};
+// legend items hidden from the chart, per dimension; kept across reloads
+function hidden(){try{return new Set(JSON.parse(store.get('hide.'+dim,'[]')))}catch(_){return new Set()}}
+// time-range selection: drag across the chart, or click a tick to select just it. Snaps to ticks: the range is
+// (tick before, tick after], i.e. everything that happened between two samples of the timeline.
+// The first tick of the history holds everything up to the first sample (under mhp run: mysqld's whole startup,
+// with the buffer pool). No sample precedes it, so a range that includes it starts 1 ms before it (first()).
+const first=()=>hist.length?hist[0].t:0,fromStart=r=>r&&r.from<first();
+const tAt=e=>{const r=$('cv').getBoundingClientRect(),c=chart;return c.T0+(c.T1-c.T0)*Math.min(1,Math.max(0,(e.clientX-r.left-c.L)/c.w))};
+function snap(a,b){const ts=chart.pts.map(v=>v.t);let from=ts[0],to=ts[ts.length-1];
+ for(const t of ts){if(t<=a)from=t;if(t>=b){to=t;break}}
+ // started at the left end of the whole history (nearer to its first sample than to the second): include the first tick
+ if(ts[0]===first()&&a<=(ts[0]+(ts[1]||ts[0]))/2)return {from:ts[0]-1,to:Math.max(to,ts[0])};
+ if(to<=from){const i=ts.indexOf(from);if(i>0)from=ts[i-1];else to=ts[Math.min(1,ts.length-1)]}return {from,to}}
+$('cv').onmousedown=e=>{if(!chart)return;const t=tAt(e);drag={a:t,from:t,to:t,x:e.clientX};e.preventDefault()};
+addEventListener('mousemove',e=>{if(!drag||!chart)return;const t=tAt(e);drag.from=Math.min(drag.a,t);drag.to=Math.max(drag.a,t);draw()});
+addEventListener('mouseup',e=>{if(!drag||!chart)return;const d=drag;drag=null;
+ if(Math.abs(e.clientX-d.x)<4){const t=d.a,p=chart.pts;let i=p.findIndex(v=>v.t>=t);if(i<0)i=p.length-1;if(i>0&&Math.abs(p[i-1].t-t)<Math.abs(p[i].t-t))i--;if(i===0&&p[0].t!==first())i=1;sel=i?{from:p[i-1].t,to:p[i].t}:{from:p[0].t-1,to:p[0].t}}
+ else sel=snap(d.from,d.to);
+ store.set('sel',JSON.stringify(sel));if(!paused)$('pause').click();draw();showRange()});
+$('cv').onmousemove=e=>{if(drag||!chart)return;const t=tAt(e),p=chart.pts;let v=p[0];for(const q of p)if(Math.abs(q.t-t)<Math.abs(v.t-t))v=q;
+ const sw=(v.proc||{}).swap,rs=v.region_swap;
+ const tip=$('tip');tip.innerHTML=`${T(v.t)}${v.paused?' · <b>tracing paused</b>':''}<br>RSS ${B((v.proc||{}).rss)}`+(sw?` · swap ${B(sw)}`+(rs?' ('+Object.entries(rs).sort((a,b)=>b[1]-a[1]).map(([k,n])=>esc(k)+' '+B(n)).join(', ')+')':''):'')+(v.has_trace?` · traced ${B(v.traced)}`+(v.traced_peak>v.traced?` · peak in tick ${B(v.traced_peak)}`:'')+`<br>allocated ${B(v.alloc_rate)}/s · freed ${B(v.free_rate)}/s`:'');
+ tip.style.display='block';tip.style.left=Math.min(e.clientX+12,innerWidth-530)+'px';tip.style.top=(e.clientY+14)+'px'};
+$('cv').onmouseleave=()=>$('tip').style.display='none';
+async function showRange(){
+ syncRange();loadArenasSel();const el=$('rng');el.classList.toggle('hidden',!sel);if(!sel)return;
+ const q=new URLSearchParams({from:sel.from,to:sel.to});let r={};try{r=await (await fetch('/range?'+q)).json()}catch(e){}
+ const H=info.heap,F=info.faults,areas=[],sk={};(r.sub_areas||[]).forEach(a=>{const i=a.area.indexOf(' · ');(sk[a.area.slice(0,i)]=sk[a.area.slice(0,i)]||[]).push({...a,sub:a.area.slice(i+3)})});
+ (r.areas||[]).filter(a=>a.alloc||a.free||a.faulted).forEach(a=>{areas.push(a);(sk[a.area]||[]).filter(c=>c.alloc||c.free||c.faulted).forEach(c=>areas.push(c))});
+ el.innerHTML=(fromStart(sel)?`<span title="includes the first tick of the kept history: everything recorded up to ${T(first())} (from process start under mhp run, else from attach)">range <b>start → ${T(sel.to)}</b></span>`:`<span>range <b>${T(sel.from)} → ${T(sel.to)}</b> (${((sel.to-sel.from)/1000).toFixed(0)} s)</span>`)+
+  (H?`<span>allocated <b>${B(r.alloc)}</b> <span class="note">(${(r.samples||0).toLocaleString()} samples, largest ${B(r.max)})</span></span><span>freed <b>${B(r.free)}</b></span><span>net ${D((r.alloc||0)-(r.free||0))}</span>`+
+   `<span title="highest traced live bytes inside the range, above the value at its start (event order)">peak rise <b>${D(r.peak_rise||0)}</b></span>`:'')+
+  (F?`<span title="pages the kernel had to supply: first touch of new or returned memory">page faults <b>${B(r.faulted)}</b></span>`:'')+
+  (r.oldest>sel.from?`<span class="warn">older part already dropped from the timeline (raise -retention / -timeline)</span>`:'')+
+  (H&&!r.samples?`<span class="note">nothing sampled (tracing paused?)</span>`:'')+
+  (H&&r.samples&&hist.some(v=>v.paused&&v.t>sel.from&&v.t<=sel.to)?`<span class="warn">tracing was paused for part of this range: allocations then are missing</span>`:'')+
+  (H?`<button data-m="range_alloc">explore allocated</button><button data-m="range_free">explore freed</button>`:'')+(F?`<button data-m="range_faults">explore faults</button>`:'')+
+  `<button id="rngrep" title="download a self-contained HTML report of this range (metadata, totals, timeline, areas, top functions, threads, flame graphs, raw stacks) for offline review">export HTML report</button>`+
+  `<button id="rngx" title="clear the selection">×</button>`+
+  (areas.length?`<div class="full"><table><tr><th>area (sub-system)</th>${H?'<th title="bytes allocated in the range, freed or not">allocated</th><th>freed</th><th>net</th><th title="highest live bytes of this area inside the range, above its value at the start: how much memory it needed at once">peak rise</th><th>samples</th><th>largest request</th>':''}${F?'<th title="pages first touched: what the kernel had to supply">page faults</th>':''}</tr>`+
+   areas.map(a=>`<tr class="click" data-a="${esc(a.area)}"><td${a.sub?' class="sub"':''}>${esc(a.sub||a.area)}</td>${H?`<td class="n">${B(a.alloc)}</td><td class="n">${B(a.free)}</td><td class="n">${D(a.alloc-a.free)}</td><td class="n">${a.sub?'':D(a.peak_rise)}</td><td class="n">${a.samples.toLocaleString()}</td><td class="n">${B(a.max)}</td>`:''}${F?`<td class="n">${B(a.faulted)}</td>`:''}</tr>`).join('')+
+   '</table><span class="note">click an area to explore its stacks in this range</span></div>':'');
+ el.querySelectorAll('button[data-m]').forEach(b=>b.onclick=()=>{$('xm').value=b.dataset.m;focus=[];showTab('ex')});
+ el.querySelectorAll('tr[data-a]').forEach(tr=>tr.onclick=()=>{const a=tr.dataset.a,x=$('xsub');
+  if(![...x.options].some(o=>o.value===a))x.add(new Option(a,a));x.value=a;$('xm').value=H?'range_alloc':'range_faults';focus=[];showTab('ex')});
+ $('rngx').onclick=clearRange;$('rngrep').onclick=()=>download('/report.html?'+new URLSearchParams({from:sel.from,to:sel.to,download:1}));
+}
+function clearRange(){sel=null;store.set('sel','');loadArenasSel();if($('xm').value.startsWith('range_')){$('xm').value=info.heap?'live':'faults_window';if(tab==='ex')loadStacks()}
+ if(paused)$('pause').click();showRange();draw()}
+function syncRange(){
+ document.querySelectorAll('#xm option.rg').forEach(o=>o.disabled=!sel||(o.classList.contains('heap')?!info.heap:!info.faults));
+ $('xrep').classList.toggle('hidden',!sel);
+ const c=$('xrng');c.classList.toggle('hidden',!sel);if(sel){c.innerHTML=`range ${fromStart(sel)?'start':T(sel.from)} → ${T(sel.to)}<button title="clear the time range">×</button>`;c.querySelector('button').onclick=clearRange}
+}
+
+// ---------- threads ----------
+let thSort=store.get('thSort','live'),thDir=-1;
+['thq','thgrp','thdead'].forEach(id=>$(id).oninput=()=>threads(hist[hist.length-1]));
+function spark(key,field){
+ const pts=hist.slice(-120).map(v=>{const r=(v.threads||[]).find(t=>key.tid?t.tid===key.tid:t.role===key.role);return r?r[field]:0});
+ const mx=Math.max(1,...pts);if(pts.every(p=>!p))return'';
+ return `<svg width="80" height="18" viewBox="0 0 80 18"><polyline fill="none" stroke="currentColor" stroke-width="1.2" points="${pts.map((p,i)=>`${(80*i/Math.max(1,pts.length-1)).toFixed(1)},${(17-16*p/mx).toFixed(1)}`).join(' ')}"/></svg>`;
+}
+function threads(v){
+ if(!v||tab!=='th')return;
+ let rows=(v.threads||[]).filter(t=>$('thdead').checked||t.alive);
+ const q=$('thq').value.trim().toLowerCase();if(q)rows=rows.filter(t=>(t.comm+' '+t.tid+' '+t.role).toLowerCase().includes(q));
+ const grp=$('thgrp').checked;
+ if(grp){const m={};rows.forEach(t=>{const g=m[t.role]||(m[t.role]={role:t.role,comm:t.role,n:0,alive:true,live:0,growth:0,alloc_rate:0,free_rate:0,minflt_s:0,majflt_s:0,cpu:0});
+   g.n++;['live','growth','alloc_rate','free_rate','minflt_s','majflt_s','cpu','fault_win','fault_rate'].forEach(k=>g[k]=(g[k]||0)+(t[k]||0))});rows=Object.values(m)}
+ rows.sort((a,b)=>{const x=a[thSort],y=b[thSort];return (typeof x==='string'?String(x).localeCompare(y):(x-y))*thDir});
+ const cols=[[grp?'n':'tid',grp?'threads':'TID'],['comm',grp?'role':'name'],['cpu','CPU%'],['minflt_s','minflt/s'],['majflt_s','majflt/s'],['live','live'],['growth','Δ '+v.growth_secs+'s'],['alloc_rate','alloc/s'],['free_rate','free/s']].concat(v.has_faults?[['fault_win','faulted Δ'],['fault_rate','fault B/s']]:[]).concat(v.pfs&&!grp?(v.pfs.source==='mariadb'?[['pfs_bytes','MEMORY_USED'],['pfs_name','connection (max used)']]:[['pfs_bytes','PFS bytes'],['pfs_name','PFS thread / connection']]):[]);
+ if(v.pfs&&!grp)rows.forEach(t=>{t.pfs_bytes=t.pfs?t.pfs.bytes:0;t.pfs_name=t.pfs?t.pfs.name:''});
+ $('thr').innerHTML='<tr>'+cols.map(c=>`<th class="s" data-k="${c[0]}">${c[1]}${thSort===c[0]?(thDir<0?' ▼':' ▲'):''}</th>`).join('')+'<th>live (2 min)</th><th>flt/s (2 min)</th></tr>'+
+ rows.slice(0,800).map(t=>`<tr class="click ${t.alive?'':'dead'}" data-tid="${grp?'':t.tid}" data-role="${esc(t.role)}">
+  <td class="n">${grp?t.n:t.tid}</td><td>${esc(t.comm)}${!grp&&t.role!==t.comm?` <span style="color:var(--mut)">${esc(t.role)}</span>`:''}${t.alive?'':' (exited)'}</td>
+  <td class="n">${(t.cpu||0).toFixed(1)}</td><td class="n">${Math.round(t.minflt_s||0).toLocaleString()}</td><td class="n">${Math.round(t.majflt_s||0)}</td>
+  <td class="n">${v.has_trace?B(t.live):'–'}</td><td class="n">${v.has_trace?D(t.growth):'–'}</td><td class="n">${v.has_trace?B(t.alloc_rate)+'/s':'–'}</td><td class="n">${v.has_trace?B(t.free_rate)+'/s':'–'}</td>${v.has_faults?`<td class="n">${B(t.fault_win)}</td><td class="n">${B(t.fault_rate)}/s</td>`:''}${v.pfs&&!grp?`<td class="n">${t.pfs?B(t.pfs.bytes):'–'}</td><td>${t.pfs?esc(t.pfs.name)+(t.pfs.conn_id?` <span style="color:var(--mut)">#${t.pfs.conn_id} ${esc(t.pfs.user)} ${esc(t.pfs.command)}${t.pfs.max_bytes?' · max '+B(t.pfs.max_bytes):''}</span>`:''):''}</td>`:''}
+  <td>${v.has_trace?spark(grp?{role:t.role}:{tid:t.tid},'live'):''}</td><td>${spark(grp?{role:t.role}:{tid:t.tid},'minflt_s')}</td></tr>`).join('');
+ $('thr').querySelectorAll('th.s').forEach(th=>th.onclick=()=>{const k=th.dataset.k;thDir=thSort===k?-thDir:-1;thSort=k;store.set('thSort',k);threads(hist[hist.length-1])});
+ $('thr').querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>{if(!v.has_trace&&!v.has_faults)return;if(!v.has_trace)$('xm').value='faults_window';$('xtid').value=tr.dataset.tid;$('xrole').value=tr.dataset.tid?'':tr.dataset.role;focus=[];showTab('ex')});
+}
+
+// ---------- explore (flame / callers / tree) ----------
+const WRT=/^(_int_malloc|_int_realloc|__libc_malloc|malloc|calloc|realloc|free|posix_memalign|aligned_alloc|memalign|operator new|operator delete|my_malloc|my_realloc|my_raw_malloc|my_raw_realloc|my_internal_malloc|my_internal_realloc|my_memdup|my_strdup|my_once_alloc|__libc_|ut::detail::|ut::.*(alloc|new)|\[anon mmap\]|std::__new_allocator|std::allocator|Stateful_allocator|Ut_allocator)/;
+const WR=new RegExp('^(\\[fault|'+WRT.source.slice(2)); // tables also hide the [fault: region] leaf
+let stacks=[],focus=[],rects=[],lastRoot=null;
+['xm','xrole','xsub'].forEach(id=>$(id).onchange=()=>{focus=[];loadStacks()});
+$('xv').onchange=()=>{focus=[];build()};$('xw').onchange=()=>{focus=[];build()};$('xq').oninput=()=>build();
+$('xtid').onchange=()=>{focus=[];loadStacks()};$('xr').onclick=loadStacks;
+document.querySelectorAll('[data-clr]').forEach(b=>b.onclick=()=>{const i=$(b.dataset.clr);i.value='';
+ i.dispatchEvent(new Event(b.dataset.clr==='xq'?'input':'change'));i.focus()});
+// source location of a frame: hover previews, click (zoom / expand) pins it so its links can be clicked
+const srcCache=new Map();let srcFrame='',srcPin=false,srcTimer=0;
+function showSrc(name,pin){if(!name||srcPin&&!pin)return;if(name===srcFrame&&!pin)return;
+ srcFrame=name;srcPin=!!pin;clearTimeout(srcTimer);
+ srcTimer=setTimeout(async()=>{let r=srcCache.get(name);
+  if(!r){renderSrc(name,null);try{r=await (await fetch('/source?f='+encodeURIComponent(name))).json()}catch(e){r={}}srcCache.set(name,r)}
+  if(srcFrame===name)renderSrc(name,r)},pin?0:150)}
+function renderSrc(name,r){
+ const head=srcPin?'<button id="srcx" title="unpin: follow the mouse again">× unpin</button> 📌 ':'';
+ $('src').innerHTML=head+`<code>${esc(name)}</code> · `+(!r?'looking up source…':r.file?`${esc(r.file)}:${r.line}`+(r.links||[]).map(l=>
+  `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(''):'no source location (no debug info, or not a function)')+
+  (srcPin?'':' <span class="hint">· click the frame to pin</span>');
+ if(srcPin)$('srcx').onclick=()=>{srcPin=false;srcFrame='';$('src').textContent='hover a frame for its source location · click to pin it'}}
+const rangeArgs=()=>$('xm').value.startsWith('range_')&&sel?{from:sel.from,to:sel.to}:{};
+function exportURL(path){return path+'?'+new URLSearchParams({metric:$('xm').value,role:$('xrole').value,subsys:$('xsub').value,
+ tid:$('xtid').value.trim(),view:$('xv').value==='callers'?'callers':'flame',wrappers:$('xw').checked?'hide':'show',download:1,...rangeArgs()})}
+function download(url){if(window.mhpOffline)return mhpOffline.download(url);const a=document.createElement('a');a.href=url;a.download='';document.body.appendChild(a);a.click();a.remove()}
+$('xsvg').onclick=()=>download(exportURL('/flame.svg'));$('xrep').onclick=()=>{if(sel)download('/report.html?'+new URLSearchParams({role:$('xrole').value,subsys:$('xsub').value,tid:$('xtid').value.trim(),from:sel.from,to:sel.to,download:1}))};$('xfold').onclick=()=>download(exportURL('/folded'));$('xpp').onclick=()=>download(exportURL('/pprof'));
+async function loadStacks(){
+ if(!info.drilldown){$('xnote').textContent='Drill-down needs a stack source: run mhp as root (page faults; eBPF heap stacks) and/or start the target via "mhp run -- …" / LD_PRELOAD=libmhp.so (heap).';return}
+ if($('xm').value.startsWith('range_')&&!sel){$('xm').value=info.heap?'live':'faults_window'}
+ const p=new URLSearchParams({metric:$('xm').value,role:$('xrole').value,subsys:$('xsub').value,tid:$('xtid').value.trim(),...rangeArgs()});
+ try{stacks=await (await fetch('/stacks?'+p)).json()||[]}catch(e){stacks=[]}build()}
+function tree(){
+ const inv=$('xv').value==='callers',hide=$('xw').checked,growth=/growth|net/.test($('xm').value);
+ const root={n:'all',v:0,s:0,k:0,m:0,c:new Map()};let neg=0;
+ const add=(n,st)=>{n.v+=st.v;n.k+=st.n||0;n.m=Math.max(n.m,st.m||0)};
+ for(const st of stacks){if(st.v<=0){neg+=st.v;continue}
+  let fr=st.f;if(hide)fr=fr.filter(f=>!WRT.test(f));if(inv)fr=fr.slice().reverse();
+  let n=root;add(n,st);for(const f of fr){let ch=n.c.get(f);if(!ch){ch={n:f,v:0,s:0,k:0,m:0,c:new Map()};n.c.set(f,ch)}add(ch,st);n=ch}n.s+=st.v}
+ return {root,neg:growth?neg:0};
+}
+function node(root){let n=root;for(const f of focus){const ch=n.c.get(f);if(!ch){focus=[];return root}n=ch}return n}
+function build(){
+ if(tab!=='ex')return;
+ const {root,neg}=tree(),view=$('xv').value,isTree=view==='tree';lastRoot=root;
+ $('fl').classList.toggle('hidden',isTree);$('treew').classList.toggle('hidden',!isTree);$('treebtn').classList.toggle('hidden',!isTree);
+ $('crumbs').innerHTML=['all'].concat(focus).map((f,i)=>`<a data-i="${i}">${esc(f)}</a>`).join(' → ');
+ $('crumbs').querySelectorAll('a').forEach(a=>a.onclick=()=>{focus=focus.slice(0,+a.dataset.i);build()});
+ $('xnote').textContent=`${stacks.length} stacks, ${B(root.v)} total`+(neg?` · shrinking stacks not shown: ${B(neg)}`:'')+` · click a frame to zoom${view==='callers'?' (root row = allocating function, below = its callers)':''}`;
+ isTree?drawTree(root):drawFlame(root);
+}
+function color(name,q){
+ if(q&&name.toLowerCase().includes(q))return getComputedStyle(document.documentElement).getPropertyValue('--hi');
+ let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))|0;
+ const base=/^(buf_|btr_|row_|trx_|lock_|fil_|log_|dict_|srv_|mem_heap|fts_|page_|ut::|ib::|os_|innobase|ha_innobase)/.test(name)?28:/(pfs_|PFS_|_pfs)/.test(name)?190:/^(Item|JOIN|THD|Query|dispatch|mysql_|sql_|Sql_|handle_|Prepared|Table|open_|TABLE)/.test(name)?215:/^(SSL|CRYPTO|EVP|ossl)/i.test(name)?300:/^(std::|__|\[)/.test(name)?0:45;
+ return document.documentElement.dataset.theme==='dark'?`hsl(${base+(Math.abs(h)%24)},${base?48:0}%,${26+Math.abs(h>>5)%10}%)`: // dark boxes, light text
+  `hsl(${base+(Math.abs(h)%24)},${base?55:0}%,${80+Math.abs(h>>5)%9}%)`; // light boxes, dark text
+}
+function drawFlame(root){
+ const cv=$('fl'),RH=18,q=$('xq').value.trim().toLowerCase();
+ const f=node(root),anc=[root];{let n=root;for(const p of focus){n=n.c.get(p);anc.push(n)}}
+ let depth=0;(function d(n,k){depth=Math.max(depth,k);for(const c of n.c.values())if(c.v/f.v>0.001)d(c,k+1)})(f,0);
+ const rowsN=anc.length-1+depth+1,W=cv.clientWidth||900,H=Math.max(120,rowsN*RH+4),dpr=devicePixelRatio||1;
+ cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,W,H);x.font='10.5px '+getComputedStyle(document.documentElement).getPropertyValue('--mono');rects=[];
+ const box=(n,X,Y,w,path,dim)=>{x.fillStyle=color(n.n,q);x.globalAlpha=dim?.5:1;x.fillRect(X,Y,w-1,RH-1);x.globalAlpha=1;
+  if(w>30){const hl=q&&n.n.toLowerCase().includes(q);x.fillStyle=hl?css('--flhl'):css('--fltext');const t=n.n,m=Math.floor((w-6)/6.6);x.fillText(t.length>m?t.slice(0,m-1)+'…':t,X+3,Y+12)}rects.push({X,Y,w,n,path})};
+ anc.forEach((n,i)=>box(n,0,i*RH,W,focus.slice(0,i),true));
+ const y0=(anc.length-1)*RH;
+ (function lay(n,X,Y,path){let cx=X;const kids=[...n.c.values()].sort((a,b)=>b.v-a.v);
+  for(const c of kids){const w=W*c.v/f.v;if(w<1){continue}const p=path.concat(c.n);box(c,cx,Y,w,p,false);lay(c,cx,Y+RH,p);cx+=w}})(f,0,y0+RH,focus.slice());
+ if(!f.c.size&&!stacks.length){x.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--mut');x.fillText('no data for this selection',10,40)}
+}
+const hit=e=>{const r=$('fl').getBoundingClientRect(),X=e.clientX-r.left,Y=e.clientY-r.top;return rects.find(o=>X>=o.X&&X<o.X+o.w&&Y>=o.Y&&Y<o.Y+18)};
+$('fl').onclick=e=>{const o=hit(e);if(o){focus=o.path;build();if(o.n.n!=='all')showSrc(o.n.n,true)}};
+$('fl').onmousemove=e=>{const o=hit(e),t=$('tip');if(!o){t.style.display='none';return}
+ if(o.n.n!=='all')showSrc(o.n.n);
+ const root=lastRoot||{v:1};t.innerHTML=`<code>${esc(o.n.n)}</code><br>${B(o.n.v)} · ${(100*o.n.v/(root.v||1)).toFixed(1)}% of total · self ${B(o.n.s)}`+(o.n.k?`<br>${o.n.k.toLocaleString()} samples · largest request ${B(o.n.m)}`:'');
+ t.style.display='block';t.style.left=Math.min(e.clientX+12,innerWidth-530)+'px';t.style.top=(e.clientY+14)+'px'};
+$('fl').onmouseleave=()=>$('tip').style.display='none';
+let open=new Set(),revealedQ='',treeRoot=null;
+const MIN=0.0005; // rows below this share of the focused total are not listed
+// visit calls fn(node, path, key) for every listed node under f (pre-order); fn returning true stops the walk
+function visit(f,fn){(function w(n,path){for(const c of n.c.values()){if(c.v/(f.v||1)<MIN)continue;const p=path.concat(c.n);
+ if(fn(c,p,p.join('\u0001'))||w(c,p))return true}return false})(f,focus)}
+// reveal opens every path that leads to a frame matching q (the matches themselves stay as they are)
+function reveal(f,q){let n=0;visit(f,(c,p)=>{if(c.n.toLowerCase().includes(q)){for(let i=focus.length+1;i<p.length;i++)open.add(p.slice(0,i).join('\u0001'));
+ if(++n>=300)return true}return false});return n}
+function drawTree(root){
+ treeRoot=root;
+ const f=node(root),q=$('xq').value.trim().toLowerCase(),out=[];let scroll=false;
+ if(q.length>=3&&q!==revealedQ){open.clear();reveal(f,q);scroll=true} // each new search shows only its own paths
+ revealedQ=q;
+ (function walk(n,path,dep){for(const c of [...n.c.values()].sort((a,b)=>b.v-a.v)){if(c.v/(f.v||1)<MIN)continue;const p=path.concat(c.n),k=p.join('\u0001');
+  out.push({c,p,k,dep});if(open.has(k))walk(c,p,dep+1);if(out.length>3000)return}})(f,focus,0);
+ const hits=q?out.filter(r=>r.c.n.toLowerCase().includes(q)).length:0;
+ $('tree').innerHTML=`<tr><th>function${q?` <span style="font-weight:400">(${hits} matching row${hits===1?'':'s'} shown)</span>`:''}</th><th>total</th>`+'<th>%</th><th>self</th>'+(root.k?'<th title="sampled allocations behind the total (more = more precise)">samples</th><th>largest request</th>':'')+'</tr>'+out.map((r,i)=>`<tr data-i="${i}"${q&&r.c.n.toLowerCase().includes(q)?' class="hit"':''}><td class="f" style="padding-left:${8+r.dep*14}px"><span class="tg">${r.c.c.size?(open.has(r.k)?'▾':'▸'):''}</span><span style="${q&&r.c.n.toLowerCase().includes(q)?'color:var(--hi);font-weight:600':''}">${esc(r.c.n)}</span></td>
+  <td class="n">${B(r.c.v)}</td><td class="n">${(100*r.c.v/(root.v||1)).toFixed(1)}</td><td class="n">${B(r.c.s)}</td>${root.k?`<td class="n">${r.c.k.toLocaleString()}</td><td class="n">${B(r.c.m)}</td>`:''}</tr>`).join('');
+ $('tree').querySelectorAll('tr[data-i]').forEach(tr=>tr.onmouseenter=()=>showSrc(out[+tr.dataset.i].c.n));
+ $('tree').querySelectorAll('tr[data-i]').forEach(tr=>tr.onclick=()=>{const r=out[+tr.dataset.i];showSrc(r.c.n,true);if(open.has(r.k)){open.delete(r.k)}else{let n=r.c,p=r.p;open.add(r.k);while(n.c.size===1){n=[...n.c.values()][0];p=p.concat(n.n);open.add(p.join('\u0001'))}}drawTree(root)});
+ if(scroll){const h=$('tree').querySelector('tr.hit');if(h)h.scrollIntoView({block:'center'})}
+}
+$('xexp').onclick=()=>{if(!treeRoot)return;const f=node(treeRoot);let n=0;visit(f,(c,p,k)=>{if(c.c.size)open.add(k);return ++n>3000});drawTree(treeRoot)};
+$('xcol').onclick=()=>{open.clear();revealedQ=$('xq').value.trim().toLowerCase();if(treeRoot)drawTree(treeRoot)};
+function fillSelect(sel,vals,label){const cur=sel.value;const opts=[...new Set(vals)].filter(Boolean).sort();
+ const have=[...sel.options].slice(1).map(o=>o.value).join('|');if(have===opts.join('|'))return;
+ sel.innerHTML=`<option value="">${label}</option>`+opts.map(o=>`<option>${esc(o)}</option>`).join('');sel.value=cur}
+
+// ---------- context ----------
+async function context(){let meta=[];try{meta=await (await fetch('/meta')).json()||[]}catch(e){}
+ const rows=[...meta],o=info.offline;
+ if(hist.length)rows.push(['Kept history',`${new Date(hist[0].t).toLocaleString()} → ${T(hist[hist.length-1].t)} (${hist.length} views, up to ${Math.round((info.retention_s||0)/60)} min)`]);
+ if(o)rows.push(['Offline copy',`taken ${new Date(o.created).toLocaleString()}: ${o.ticks} timeline ticks, ${o.sources} source locations`]);
+ $('ctx').innerHTML=rows.length?rows.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join(''):'<tr><td class="note">no context available</td></tr>'}
+
+// ---------- tracer toggle ----------
+let tracerOn=true;
+function showTracer(){$('trc').textContent=tracerOn?'⏸ pause tracing':'▶ resume tracing (paused)';$('trc').classList.toggle('off',!tracerOn);pills()}
+$('offl').onclick=()=>download('/offline.html');
+$('trc').onclick=async()=>{const r=await fetch('/tracer?on='+(tracerOn?0:1),{method:'POST'});if(r.ok)tracerOn=!tracerOn;showTracer()};
+
+// ---------- main loop ----------
+function render(){const v=hist[hist.length-1];if(!v)return;masthead(v);
+ if(tab==='ov'){gauges(v);stackRows($('top'),v.top,'t');stackRows($('grow'),v.growers,'g');accounting(v);arenaPanel();$('fltw').classList.toggle('hidden',!v.has_faults);if(v.has_faults){stackRows($('flt'),v.faulters,'f');$('fw').textContent='last '+v.growth_secs+' s'}$('gw').textContent='last '+v.growth_secs+' s';draw()}
+ if(tab==='th')threads(v);
+ fillSelect($('xrole'),(v.threads||[]).map(t=>t.role),'all roles');fillSelect($('xsub'),Object.keys(v.by_subsys||{}).concat(Object.keys(v.by_area||{})),'all sub-systems');
+}
+fetch('/info').then(r=>r.json()).then(i=>{info=i||{};
+ if(info.retention_s){for(const o of $('win').options)o.disabled=+o.value>info.retention_s&&o.value!=='86400';if(win>info.retention_s){win=86400;$('win').value=win}}$('trc').classList.toggle('hidden',!info.tracer);tracerOn=!info.paused;showTracer();$('arr').classList.toggle('hidden',!info.arenas);loadPeaks();
+ document.querySelectorAll('#xm option.heap').forEach(o=>o.disabled=!info.heap);document.querySelectorAll('#xm option.flt').forEach(o=>o.disabled=!info.faults);
+ if(!info.heap&&info.faults)$('xm').value='faults_window';syncRange()}).catch(()=>{});
+fetch('/arenas').then(r=>r.json()).then(a=>{if(a&&!arLatest){arLatest=a;if(tab==='ov')arenaPanel()}}).catch(()=>{});
+fetch('/history').then(r=>r.json()).then(h=>{hist=h||[];
+ try{const s0=JSON.parse(store.get('sel','')||'null');if(s0&&hist.length&&s0.from>=hist[0].t-1&&s0.to<=hist[hist.length-1].t)sel=s0;else store.set('sel','')}catch(e){store.set('sel','')}
+ if(paused&&(!hist.length||frozenAt<hist[0].t)){paused=false;frozenAt=0;store.set('frozen','')} // older than the kept history
+ pauseLabel();fitWin();showTab(tab);if(sel)showRange()}).catch(()=>showTab(tab));
+const es=new EventSource('/events');
+es.onopen=()=>{$('st').className='pill ok';$('st').innerHTML='<i></i>live'};es.onerror=()=>{$('st').className='pill badp';$('st').innerHTML='<i></i>disconnected'};
+// like the server (live.Detail), only the newest 120 views keep their tables; older ones feed the chart only
+const slim=v=>{for(const k of ['threads','top','growers','faulters','tracers','pfs','heap'])delete v[k]};
+// colour theme: light by default, dark when chosen (kept in this browser, offline copies included)
+const isDark=()=>document.documentElement.dataset.theme==='dark';
+function syncTheme(){$('theme').textContent=isDark()?'☀ light':'☾ dark'}
+$('theme').onclick=()=>{const r=document.documentElement;if(isDark())delete r.dataset.theme;else r.dataset.theme='dark';
+ try{localStorage.setItem('mhp-theme',isDark()?'dark':'light')}catch(e){}syncTheme();readPal();
+ if(tab==='ov')draw();else if(tab==='ex')build()};
+syncTheme();
+es.onmessage=e=>{const v=JSON.parse(e.data);if(v.arenas)arLatest=v.arenas;hist.push(v);if(hist.length>121)slim(hist[hist.length-122]);
+ while(hist.length>(info.history_views||600))hist.shift();if(!paused)render()};
+setInterval(()=>{if(tab==='ex'&&$('xa').checked&&!paused)loadStacks()},3000);
+addEventListener('resize',()=>{draw();build()});
+</script></body></html>
