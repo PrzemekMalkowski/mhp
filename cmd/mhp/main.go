@@ -43,7 +43,7 @@ import (
 )
 
 // Version is mhp's version, shown by "mhp version", in the UI's Context tab and in reports.
-const Version = "0.1.7"
+var Version = "0.1.8" // set from the git tag by release builds: -ldflags "-X main.Version=..."
 
 func usage() {
 	fmt.Fprint(os.Stderr, `mhp `+Version+`: Multi-dimensional Heap Profiler

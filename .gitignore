@@ -8,8 +8,11 @@
 !/shim/
 !/scripts/
 !/docs/
+!/LICENSE
+!/.goreleaser.yaml
 
 # build outputs (bin/libmhp.so, bin/mhp; the embedded BPF objects and mhp.wasm.gz stay tracked: go build needs them)
 /bin/
+/dist/
 internal/offline/mhp.wasm
 scripts/dev/*.log

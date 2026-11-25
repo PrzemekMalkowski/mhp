@@ -1,0 +1,54 @@
+# Release: git tag vX.Y.Z && git push origin vX.Y.Z && GITHUB_TOKEN=... goreleaser release --clean
+# Local test: goreleaser release --snapshot --clean   (writes dist/)
+#
+# mhp is pure Go (CGO off); the BPF objects and the offline copy's WebAssembly are committed and embedded, so
+# rerun `make -C bpf` / `go generate ./internal/offline` and commit before tagging when their sources changed.
+# libmhp.so is C, built by the hook below with the host's cc: build on the oldest glibc you want to support
+# (it needs glibc 2.34+ symbols, e.g. RHEL/Rocky 9, Debian 12, Ubuntu 22.04).
+version: 2
+project_name: mhp
+
+before:
+  hooks:
+    - go mod verify
+    - make -C shim
+
+builds:
+  - id: mhp
+    main: ./cmd/mhp
+    binary: mhp
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [amd64]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.Version={{ .Version }}"]
+
+archives:
+  - id: mhp
+    ids: [mhp]
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    formats: [tar.gz]
+    wrap_in_directory: true
+    files:
+      - README.md
+      - LICENSE
+      - src: bin/libmhp.so
+        dst: .
+        strip_parent: true
+
+checksum:
+  name_template: SHA256SUMS
+
+changelog:
+  sort: asc
+  filters:
+    exclude: ["^docs:", "^test:"]
+
+release:
+  github:
+    owner: PrzemekMalkowski
+    name: mhp
+  header: |
+    Linux x86_64. Unpack and keep `mhp` and `libmhp.so` side by side (mhp finds the library next to itself).
+    libmhp.so needs glibc 2.34+ (RHEL/Rocky 9, Debian 12, Ubuntu 22.04 and newer).
+    Example recordings: https://przemekmalkowski.github.io/mhp/

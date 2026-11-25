@@ -1263,8 +1263,13 @@ __attribute__((constructor)) static void mhp_init(void)
 	if ((s = getenv("MHP_SAMPLE_BYTES")) && atof(s) > 0)
 		R = atof(s);
 	uint64_t nslots = 32768;
-	if ((s = getenv("MHP_SLOTS")) && atol(s) > 0)
-		nslots = (uint64_t)atol(s);
+	if ((s = getenv("MHP_SLOTS"))) { /* digits by hand: atol() binds to __isoc23_strtol (glibc 2.38+) when built there */
+		uint64_t n = 0;
+		while (*s >= '0' && *s <= '9' && n < (1ull << 40))
+			n = n * 10 + (uint64_t)(*s++ - '0');
+		if (n > 0)
+			nslots = n;
+	}
 	s = getenv("MHP_START");
 	ring_open(nslots, !(s && *s == '0'), 0);
 	t_in = 0;

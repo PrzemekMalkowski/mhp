@@ -19,7 +19,9 @@ benchmark. Each recording is the whole mhp UI saved as one HTML file, which open
 
 ## Quick start
 
-Build (Go 1.26+, a C compiler; clang and bpftool for the BPF part):
+Download the Linux x86_64 archive from [Releases](https://github.com/PrzemekMalkowski/mhp/releases) and keep `mhp`
+and `libmhp.so` side by side (libmhp needs glibc 2.34+: RHEL/Rocky 9, Debian 12, Ubuntu 22.04 and newer). Or build
+(Go 1.26+, a C compiler; clang and bpftool for the BPF part):
 
     make -C bpf && go generate ./internal/offline && go build -o bin/mhp ./cmd/mhp && make -C shim    # -> bin/mhp, bin/libmhp.so
 
