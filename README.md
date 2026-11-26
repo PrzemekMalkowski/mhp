@@ -6,6 +6,9 @@ mhp shows, live in a browser, **where a running mysqld's memory goes**: per thre
 Performance Schema, SQL layer, TempTable, …) and down to the C++ function and call path that allocated it. It is built
 for questions like "why is RSS 20 GB when the buffer pool is 12 GB?", "which part of the server is still growing?" or
 "how much memory does each open table cost?".
+### quick intro in two minutes
+
+https://github.com/user-attachments/assets/7621391e-efa8-4807-91a0-6ace855be262
 
 "Multi-dimensional" because one set of samples can be cut several ways: by sub-system, thread, memory region, call
 stack and time range, and each view filters the others.
