@@ -8,7 +8,7 @@ for questions like "why is RSS 20 GB when the buffer pool is 12 GB?", "which par
 "how much memory does each open table cost?".
 ### quick intro in two minutes
 
-https://github.com/user-attachments/assets/7621391e-efa8-4807-91a0-6ace855be262
+https://github.com/user-attachments/assets/dbf59c76-dc44-4556-8aa2-3e27a5e7c440
 
 "Multi-dimensional" because one set of samples can be cut several ways: by sub-system, thread, memory region, call
 stack and time range, and each view filters the others.
